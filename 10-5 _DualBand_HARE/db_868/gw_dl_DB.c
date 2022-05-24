@@ -386,8 +386,8 @@ PROCESS_THREAD(callback_process,ev,data){
             LOG_DBG("Sensor Data received\n");
             //process_poll(&parser_process);
                     poll_response_received = 1; //we received a poll response
-                    printf("PARSING\n");
                     //switch(buf[0] & 31){
+                    LOG_DBG("header == %d"\n , buf[0]&0b00011111);
                     switch(buf[0] & 0b00011111) //last 5 bits of the first byte is for NodeID?
                     {
                         case NODEID_MGAS1:
