@@ -167,7 +167,8 @@ PROCESS_THREAD(coordinator_process, ev,data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
     while(1)
-    {
+    {   
+        bitmask = 0xff;
         LOG_DBG("Bitmask is %d\n", bitmask);
         printf("AA0\n"); //NODE-RED HEARTBEAT
         printf("LMC,%d",lost_message_counter);

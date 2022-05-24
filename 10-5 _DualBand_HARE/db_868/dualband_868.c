@@ -345,7 +345,13 @@ PROCESS_THREAD(associator_process, ev, data){
 
   while(1){
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL); //Espera fins que arribi un missatge d'associació
+    
+    PROCESS_CONTEXT_BEGIN(&radio_rx_process);
+    
+    etimer_set(&next_beacon_etimer, (T_BEACON - 3*CLOCK_SECOND));
 
+    PROCESS_CONTEXT_END(&radio_rx_process);
+    
     time_of_beacon_rx = RTIMER_NOW();
 
     time_to_wait = (T_MDB  + ((nodeid -1) * (T_SLOT + T_GUARD)))- T_GUARD;
@@ -445,12 +451,11 @@ PROCESS_THREAD(associator_process, ev, data){
 PROCESS_THREAD(poll_process,ev,data)
 {
   static uint8_t *buffer_poll;
-  static clock_time_t time_after_poll; 
+  //static clock_time_t time_after_poll; 
 
 
   PROCESS_BEGIN();
-  PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL); //Espera que arribi un missatge demanant dades de sensors
-  printf("polling\n");
+  
 
   /*
   //Routine to be executed when we get a poll for the sensors: 
@@ -497,9 +502,10 @@ PROCESS_THREAD(poll_process,ev,data)
 
     NETSTACK_RADIO.off();
     RTIMER_BUSYWAIT(5);
-    time_after_poll = RTIMER_NOW() - time_of_beacon_rx;
-    printf("setting timer for %lu seconds. Time now: %lu, Time of beacon : %lu, dt : %lu\n", T_BEACON - 10*CLOCK_SECOND - time_after_poll/CLOCK_SECOND, RTIMER_NOW()/CLOCK_SECOND, time_of_beacon_rx/CLOCK_SECOND, time_after_poll/CLOCK_SECOND);
-    etimer_set(&next_beacon_etimer, T_BEACON - 3*CLOCK_SECOND - time_after_poll);
+    //time_after_poll = RTIMER_NOW() - time_of_beacon_rx;
+    
+    //printf("setting timer for %lu seconds. Time now: %lu, Time of beacon : %lu, dt : %lu\n", T_BEACON - 10*CLOCK_SECOND - time_after_poll/CLOCK_SECOND, RTIMER_NOW()/CLOCK_SECOND, time_of_beacon_rx/CLOCK_SECOND, time_after_poll/CLOCK_SECOND);
+    //etimer_set(&next_beacon_etimer, T_BEACON - 3*CLOCK_SECOND - time_after_poll);
     printf("still here\n");
 
 
