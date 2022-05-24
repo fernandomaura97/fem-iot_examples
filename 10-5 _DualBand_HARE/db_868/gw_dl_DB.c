@@ -387,7 +387,8 @@ PROCESS_THREAD(callback_process,ev,data){
             //process_poll(&parser_process);
                     poll_response_received = 1; //we received a poll response
                     //switch(buf[0] & 31){
-                    LOG_DBG("header == %d"\n , buf[0]&0b00011111);
+                    LOG_DBG("header == %d\n" , buf[0]&0b00011111);
+                    LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
                     switch(buf[0] & 0b00011111) //last 5 bits of the first byte is for NodeID?
                     {
                         case NODEID_MGAS1:
