@@ -391,7 +391,7 @@ PROCESS_THREAD(callback_process,ev,data){
                     LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
                     switch(buf[0] & 0b00011111) //last 5 bits of the first byte is for NodeID?
                     {
-                        case NODEID_MGAS1:
+                        
                         case NODEID_MGAS2:
                                     
                         u.temp_array[0] = buf[1];
@@ -419,7 +419,7 @@ PROCESS_THREAD(callback_process,ev,data){
                         break;
 
 
-
+                    case NODEID_MGAS1:
                     case NODEID_DHT22_1:
                     case NODEID_DHT22_2:
                     
