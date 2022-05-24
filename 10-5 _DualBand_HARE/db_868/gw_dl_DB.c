@@ -426,13 +426,13 @@ PROCESS_THREAD(callback_process,ev,data){
 
                         memcpy(&sensor_data.id1, &buf[0], sizeof(buf[0]));
                         memcpy(&sensor_data.length1, &buf[1], sizeof(buf[1]));
-                        memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(buf[2]));
-                        memcpy(&sensor_data.value_humidity1, &buf[4], sizeof(buf[4]));
+                        memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(int16_t));
+                        memcpy(&sensor_data.value_humidity1, &buf[4], sizeof(int16_t));
                     
                         memcpy(&sensor_data.id2, &buf[6], sizeof(buf[6]));
                         memcpy(&sensor_data.length2, &buf[7], sizeof(buf[7]));
-                        memcpy(&sensor_data.value_temperature2, &buf[8], sizeof(buf[8]));
-                        memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(buf[10]));
+                        memcpy(&sensor_data.value_temperature2, &buf[8], sizeof(int16_t));
+                        memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(int16_t));
 
                         printf("ID1: %d\n", sensor_data.id1);
                         printf("Length1: %d\n", sensor_data.length1);
