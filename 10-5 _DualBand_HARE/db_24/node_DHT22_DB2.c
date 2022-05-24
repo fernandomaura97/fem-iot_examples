@@ -185,7 +185,7 @@ uint8_t datasender( uint8_t id )
         megabuf[0] = 0b10000000 | id;
         memcpy(&megabuf[1], &mydata.co, sizeof(mydata.co));
         memcpy(&megabuf[5], &mydata.no2, sizeof(mydata.no2));
-        printf("Sending %d %d %d %d %d %d %d %d %d\n", megabuf[0], megabuf[1], megabuf[2], megabuf[3], megabuf[4], megabuf[5], megabuf[6], megabuf[7], megabuf[8]);
+        printf("sending %d %d %d %d %d %d\n", buf_dht22[0], buf_dht22[1], buf_dht22[2], buf_dht22[3], buf_dht22[4], buf_dht22[5]);
 
         //make sure it's correct data
         

@@ -152,6 +152,8 @@ void m_and_send_dht22(uint8_t id)
     buf_dht22[0] = 0b10000000 | id;
     memcpy(&buf_dht22[1], &temperature, sizeof(temperature));
     memcpy(&buf_dht22[3], &humidity, sizeof(humidity));
+
+    printf("sending %d %d %d %d %d %d\n", buf_dht22[0], buf_dht22[1], buf_dht22[2], buf_dht22[3], buf_dht22[4], buf_dht22[5]);
  
 
     nullnet_buf = (uint8_t *)&buf_dht22;
