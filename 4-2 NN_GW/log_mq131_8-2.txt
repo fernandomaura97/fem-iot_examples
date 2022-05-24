@@ -1,0 +1,29 @@
+Script started on 2022-02-08 18:57:17+0100
+]0;pradeepkumar@ubuntu: ~/Documents/contiki-ng/examples/4-2 NN_GW[01;32mpradeepkumar@ubuntu[00m:[01;34m~/Documents/contiki-ng/examples/4-2 NN_GW[00m$ git commit -m "all works"[K[Kmake login
+using saved target 'zoul'
+rlwrap ../../tools/serial-io/serialdump -b115200 /dev/ttyUSB0
+connecting to /dev/ttyUSB0[Kconnecting to /dev/ttyUSB0[Kconnecting to /dev/ttyUSB0 [OK]
+[K[INFO: Main      ] Starting Contiki-NG-release/v4.7-63-g79ac0f604-dirty
+[INFO: Main      ] - Routing: nullrouting
+[INFO: Main      ] - Net: nullnet
+[INFO: Main      ] - MAC: CSMA
+[INFO: Main      ] - 802.15.4 PANID: 0xabcd
+[INFO: Main      ] - 802.15.4 Default channel: 2
+[INFO: Main      ] Node ID: 3936
+[INFO: Main      ] Link-layer address: 0012.4b00.0616.0f60
+[INFO: Zoul      ] Zolertia RE-Mote revision A platform
+[Ksize of buffer: 9
+ADC: enabled channels 0x04
+Calibrando...
+Valor de sensor: 4984
+Valor de VRL:1.551
+
+Valor de R0:2222862.250
+Calibrado!
+[Kserial device disconnected: Bad file descriptor
+../../Makefile.embedded:36: recipe for target 'login' failed
+make: *** [login] Error 255
+]0;pradeepkumar@ubuntu: ~/Documents/contiki-ng/examples/4-2 NN_GW[01;32mpradeepkumar@ubuntu[00m:[01;34m~/Documents/contiki-ng/examples/4-2 NN_GW[00m$ exit
+exit
+
+Script done on 2022-02-08 18:58:12+0100
