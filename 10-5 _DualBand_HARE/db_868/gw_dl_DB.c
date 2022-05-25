@@ -346,10 +346,12 @@ PROCESS_THREAD(callback_process,ev,data){
         uint8_t temp_array[4];
         } ua;
     */
-    union{
+    
+
+    union {
         int16_t u16_var;
         uint8_t temp_array[2];
-        } ua2;
+        } u16_union;
     
     static uint8_t frame; 
     static uint8_t *buf; 
@@ -427,13 +429,35 @@ PROCESS_THREAD(callback_process,ev,data){
 
                         memcpy(&sensor_data.id1, &buf[0], sizeof(buf[0]));
                         memcpy(&sensor_data.length1, &buf[1], sizeof(buf[1]));
-                        memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(int16_t));
-                        memcpy(&sensor_data.value_humidity1, &buf[4], sizeof(int16_t));
+                        //memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(int16_t));
+
+                        u16_union.temp_array[0] = buf[2];
+                        u16_union.temp_array[1] = buf[3];
+
+                        memcpy(&sensor_data.value_temperature1, &u16_union.u16_var, sizeof(int16_t)); 
+                        ///
+
+                        u16_union.temp_array[0] = buf[4];
+                        u16_union.temp_array[1] = buf[5];
+
+                        memcpy(&sensor_data.value_humidity1, &u16_union.u16_var, sizeof(int16_t)); 
+
+                        //memcpy(&sensor_data.value_humidity1, &buf[4], sizeof(int16_t));
                     
                         memcpy(&sensor_data.id2, &buf[6], sizeof(buf[6]));
                         memcpy(&sensor_data.length2, &buf[7], sizeof(buf[7]));
-                        memcpy(&sensor_data.value_temperature2, &buf[8], sizeof(int16_t));
-                        memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(int16_t));
+
+                        u16_union.temp_array[0] = buf[8];
+                        u16_union.temp_array[1] = buf[9];
+
+                        memcpy(&sensor_data.value_temperature2, &u16_union.u16_var, sizeof(int16_t));
+                        //memcpy(&sensor_data.value_temperature2, &buf[8], sizeof(int16_t));
+                        
+                        u16_union.temp_array[0] = buf[10];
+                        u16_union.temp_array[1] = buf[11];
+                        memcpy(&sensor_data.value_humidity2, &u16_union.u16_var, sizeof(int16_t));
+                        
+                        //memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(int16_t));
 
                         printf("ID1: %d\n", sensor_data.id1);
                         printf("Length1: %d\n", sensor_data.length1);
@@ -450,15 +474,15 @@ PROCESS_THREAD(callback_process,ev,data){
                     case NODEID_O3_1:
                     case NODEID_O3_2:
                         
-                        ua2.temp_array[0] = buf[1];
-                        ua2.temp_array[1] = buf[2];
+                        u16_union.temp_array[0] = buf[1];
+                        u16_union.temp_array[1] = buf[2];
                         
-                        memcpy(&sensors.temperature, &ua2.u16_var, sizeof(int16_t)); 
+                        memcpy(&sensors.temperature, &u16_union.u16_var, sizeof(int16_t)); 
                     
 
-                        ua2.temp_array[0] = buf[3];
-                        ua2.temp_array[1] = buf[4];
-                        memcpy(&sensors.humidity, &ua2.u16_var, sizeof(int16_t));
+                        u16_union.temp_array[0] = buf[3];
+                        u16_union.temp_array[1] = buf[4];
+                        memcpy(&sensors.humidity, &u16_union.u16_var, sizeof(int16_t));
 
                         u.temp_array[0] = buf[5];
                         u.temp_array[1] = buf[6];
