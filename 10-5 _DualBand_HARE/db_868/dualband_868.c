@@ -62,7 +62,7 @@ static clock_time_t time_of_beacon_rx; // time of beacon reception
 static bool bcon_flag = 0; // flag que indica si el node ha rebut cap beacon
 
 
-
+static struct ctimer ct; 
 
 const uint8_t power_levels[3] = {0x46, 0x71, 0x7F}; // 0dB, 8dB, 14dB
 
@@ -184,6 +184,18 @@ int print_uart(unsigned char c){
 	return 1;
 }
 
+
+
+void
+ctimer_callback(void *ptr)
+{
+  /* rearm the ctimer */
+  bcon_flag = 0;
+  NETSTACK_RADIO.on();
+  RTIMER_BUSYWAIT(5);
+  LOG_DBG("CTimer callback called, turning radio ON\n");
+}
+
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(dualband_868, ev, data){
  
@@ -238,7 +250,8 @@ while(1){
 
     
      
-      
+      bcon_flag = 1;
+      ctimer_set(&ct, T_BEACON - 3*CLOCK_SECOND, ctimer_callback, NULL);
       if(Beacon_no == 0){
         
         
@@ -454,8 +467,8 @@ PROCESS_THREAD(associator_process, ev, data){
 PROCESS_THREAD(poll_process,ev,data)
 {
   static uint8_t *buffer_poll;
-  static clock_time_t time_after_poll; 
-  static struct etimer next_beacon_etimer;
+  //static clock_time_t time_after_poll; 
+ // static struct etimer next_beacon_etimer;
 
 
   PROCESS_BEGIN();
@@ -475,7 +488,7 @@ PROCESS_THREAD(poll_process,ev,data)
 
   buffer_poll = packetbuf_dataptr();
 
-  time_after_poll = RTIMER_NOW();
+  //time_after_poll = RTIMER_NOW();
   
   if(buffer_poll[1] == nodeid) //if the poll is for me
   {
@@ -510,10 +523,11 @@ PROCESS_THREAD(poll_process,ev,data)
     RTIMER_BUSYWAIT(5);
     LOG_DBG("Radio off\n");
     
-    clock_time_t time_next_beacon = (time_after_poll - time_of_beacon_rx);
+    /*clock_time_t time_next_beacon = (time_after_poll - time_of_beacon_rx);
     printf("time_next_beacon: %lu seconds, %lu ticks \n", time_next_beacon/CLOCK_SECOND, time_next_beacon);
     
     etimer_set(&next_beacon_etimer, time_next_beacon);
+    */
     //printf("setting timer for %lu seconds. Time now: %lu, Time of beacon : %lu, dt : %lu\n", T_BEACON - 10*CLOCK_SECOND - time_after_poll/CLOCK_SECOND, RTIMER_NOW()/CLOCK_SECOND, time_of_beacon_rx/CLOCK_SECOND, time_after_poll/CLOCK_SECOND);
     //etimer_set(&next_beacon_etimer, T_BEACON - 3*CLOCK_SECOND - time_after_poll);
     //printf("still here\n");
