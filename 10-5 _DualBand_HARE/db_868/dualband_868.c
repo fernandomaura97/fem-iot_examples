@@ -62,7 +62,7 @@ static clock_time_t time_of_beacon_rx; // time of beacon reception
 static bool bcon_flag = 0; // flag que indica si el node ha rebut cap beacon
 
 
-static struct etimer next_beacon_etimer;
+
 
 const uint8_t power_levels[3] = {0x46, 0x71, 0x7F}; // 0dB, 8dB, 14dB
 
@@ -452,6 +452,7 @@ PROCESS_THREAD(poll_process,ev,data)
 {
   static uint8_t *buffer_poll;
   //static clock_time_t time_after_poll; 
+  static struct etimer next_beacon_etimer;
 
 
   PROCESS_BEGIN();
