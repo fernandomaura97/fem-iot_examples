@@ -153,11 +153,7 @@ void m_and_send_dht22(uint8_t id)
     memcpy(&buf_dht22[1], &temperature, sizeof(temperature));
     memcpy(&buf_dht22[3], &humidity, sizeof(humidity));
 
-<<<<<<< HEAD
     printf("sending %d %d %d %d %d \n", buf_dht22[0], buf_dht22[1], buf_dht22[2], buf_dht22[3], buf_dht22[4]);
-=======
-    printf("Sending DHT22 data: %d %d %d %d %d\n", buf_dht22[0], buf_dht22[1], buf_dht22[2], buf_dht22[3], buf_dht22[4]); 
->>>>>>> 19583e3a829fcf88bbe5bad1a26ee3eabf8f99c9
  
 
     nullnet_buf = (uint8_t *)&buf_dht22;
@@ -380,7 +376,7 @@ PROCESS_THREAD(rx_process,ev,data)
                 is_associated = true; 
                 PROCESS_CONTEXT_END(&associator_process);
 
-                process_poll(&poll_process);
+                process_poll(&poll_process); //only happens first time, not associated
             }
             else{
                 LOG_DBG("error, different adresses");
@@ -472,7 +468,7 @@ PROCESS_THREAD(associator_process, ev,data){
             printf("I'm already associated\n");
             printf("bitmask: %02x, nodeid: %d\n", bitmask, nodeid);
             
-            
+            process_poll(&poll_process);
         }
 
 
