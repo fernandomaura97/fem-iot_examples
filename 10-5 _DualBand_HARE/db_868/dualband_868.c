@@ -510,7 +510,7 @@ PROCESS_THREAD(poll_process,ev,data)
     RTIMER_BUSYWAIT(5);
     LOG_DBG("Radio off\n");
     
-    clock_time_t time_next_beacon = T_BEACON - (time_after_poll - time_of_beacon_rx);
+    clock_time_t time_next_beacon = (time_after_poll - time_of_beacon_rx);
     printf("time_next_beacon: %lu seconds, %lu ticks \n", time_next_beacon/CLOCK_SECOND, time_next_beacon);
     
     etimer_set(&next_beacon_etimer, time_next_beacon);
