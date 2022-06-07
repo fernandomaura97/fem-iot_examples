@@ -81,13 +81,13 @@ uint8_t beacon[3];
 const char delimitador[2] = ",";
 long int sortida[3];
 char* endPtr;
-/*
+
 static struct aggregator_flags_t
 {
   bool f_m1;
   bool f_m2; 
   //TODO: add more flags if we need more messages included
-}aggregator_flags; */
+}aggregator_flags;
 
 
 
@@ -248,14 +248,14 @@ while (1){
   
 
    
-  frame_header = (bytebuf[0] & 0b11100000)>>5;
+  frame_header = (hare_stats.header&0b11100000) >>5;
   
-  header_rx_msg = (bytebuf[0]& 0b00011111);
-  uint8_t len_little = (uint8_t)cb_len + 1; // +1 for the header
+  header_rx_msg = ( hare_stats.header&0b00011111);
+  uint8_t len_little = (uint8_t)cb_len + 1; // +1 for the header //¿¿¿¿???
   
   printf("header: %d, header_rx_msg: %d, len_little: %d\n", frame_header, header_rx_msg, len_little);
   
-  /*
+  
   switch(frame_header){
     case 0: 
       LOG_DBG("RX: Beacon ???? \n");
@@ -287,20 +287,17 @@ while (1){
             memcpy(&buffer_aggregation[2], &bytebuf[1], 2*sizeof(datas.temperature)); //It will fill bytes 2 to 5 with the temperature data
             aggregator_flags.f_m1 = true; 
     
-        if(cb_len ==sizeof(hare_stats))
-  {
-        memcpy(&hare_stats, bytebuf, cb_len);
-        LOG_DBG("Received %u bytes: n_beacons: %d n_tx %d permil_radio %d permil_tx %d permil_rx %d\n", cb_len, hare_stats.n_beacons_received, hare_stats.n_transmissions, hare_stats.permil_radio_on, hare_stats.permil_tx, hare_stats.permil_rx);
-  
-         
-        TODO:
-        -test 
-        -aggregate to bigger struct
-        -activate flag
-        
-  
-  }
-
+              if(cb_len ==sizeof(hare_stats))
+              {
+              memcpy(&hare_stats, bytebuf, cb_len);
+              LOG_DBG("Received %u bytes: n_beacons: %d n_tx %d permil_radio %d permil_tx %d permil_rx %d\n", cb_len, hare_stats.n_beacons_received, hare_stats.n_transmissions, hare_stats.permil_radio_on, hare_stats.permil_tx, hare_stats.permil_rx);
+                      
+                /*TODO:
+                -test 
+                -aggregate to bigger struct
+                -activate flag
+                */
+              }
             break;
             
           case NODEID2: 
@@ -330,10 +327,10 @@ while (1){
       break;
     }
 
-    
+}
 
-  if(flag_rx_window == false){
-  process_poll( &window_process);
+  //if(flag_rx_window == false){
+  //process_poll( &window_process);
   //THIS WILL OPEN THE WINDOW AS LONG AS A MESSAGE IS RECEIVED, WATCH OUT!!!!!!!!!!!!!!!!
   
   //window process will be started when the first packet is received
@@ -342,8 +339,7 @@ while (1){
 
   //else if(flag_rx_window ==true)
   //{ 
-   */
-  } //while
+    //while
 
   //TODO: AGGREGATE MESSAGES INTO A DYNAMIC SIZE MESSAGE
 PROCESS_END();
