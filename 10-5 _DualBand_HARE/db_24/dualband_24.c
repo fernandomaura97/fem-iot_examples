@@ -35,7 +35,7 @@
 
 
 
-uint8_t buffer_aggregation[12];
+
 
 static uint8_t global_buffer[30]; 
 static volatile bool flag_rx_window  = false; 
@@ -76,6 +76,15 @@ static struct hare_stats_t{
     uint16_t permil_rx;
     } hare_stats;
 #pragma pack(pop)
+
+#pragma pack(push,1)
+static struct aggregation_stats_t{
+  struct hare_stats_t p1;
+  struct hare_stats_t p2;
+ } aggregation_msg;
+#pragma pack(pop)
+
+uint8_t buffer_aggregation[2*sizeof(hare_stats)]; //buffer for sending aggregated data
 
 char buf_in[100];
 uint8_t beacon[3];
@@ -275,19 +284,7 @@ while (1){
     case 4: 
       LOG_DBG("RX: Sensor Data\n");
 
-
-      switch(header_rx_msg) {
-        //let's assume all incoming traffic is DHT22: temp and humidity.
-        //    len_little is size of the "submessage", will be useful later if buffer is to be allocated dynamically!
-
-          case NODEID1:
-    
-            memcpy(&buffer_aggregation[0], &bytebuf[0] , sizeof(uint8_t)); //bytebuf[0] is the header: (4)<<5 | NODEID_rx 
-            memcpy(&buffer_aggregation[1], &len_little, sizeof(uint8_t));
-            memcpy(&buffer_aggregation[2], &bytebuf[1], 2*sizeof(datas.temperature)); //It will fill bytes 2 to 5 with the temperature data
-            aggregator_flags.f_m1 = true; 
-    
-              if(cb_len ==sizeof(hare_stats))
+      if(cb_len ==sizeof(hare_stats))
               {
               memcpy(&hare_stats, bytebuf, cb_len);
               LOG_DBG("Received %u bytes: n_beacons: %d n_tx %d permil_radio %d permil_tx %d permil_rx %d\n", cb_len, hare_stats.n_beacons_received, hare_stats.n_transmissions, hare_stats.permil_radio_on, hare_stats.permil_tx, hare_stats.permil_rx);
@@ -296,14 +293,27 @@ while (1){
                 -test 
                 -aggregate to bigger struct
                 -activate flag
-                */
+            */
+
+
+      switch(header_rx_msg) {
+        //let's assume all incoming traffic is DHT22: temp and humidity.
+        //    len_little is size of the "submessage", will be useful later if buffer is to be allocated dynamically!
+
+          case NODEID1:
+    
+            //memcpy(&ha, &hare_stats, sizeof(hare_stats));
+            aggregation_msg.p1 = hare_stats;
+            aggregator_flags.f_m1 = true; 
+    
+              
               }
             break;
             
           case NODEID2: 
-            memcpy(&buffer_aggregation[6], &bytebuf[0] , sizeof(uint8_t)); //bytebuf[0] is the header: (4)<<5 | NODEID_rx 
-            memcpy(&buffer_aggregation[7], &len_little , sizeof(uint8_t));
-            memcpy(&buffer_aggregation[8], &bytebuf[1], 2*sizeof(int16_t));
+            
+            aggregation_msg.p2 = hare_stats; 
+
             aggregator_flags.f_m2 = true;
             break; 
           
@@ -317,7 +327,7 @@ while (1){
         {
           aggregator_flags.f_m1 = false;
           aggregator_flags.f_m2 = false; 
-          LOG_INFO("sending through UART the aggregated msg\n");
+          LOG_INFO("sending through UART the aggregated msg\n"); //TODO: CHANGE SO IF WINDOW EXPIRES ALSO SEND THE RECEIVED DATA
           process_poll(&dualband_24);
         }
         break;
