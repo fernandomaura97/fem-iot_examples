@@ -59,8 +59,8 @@
 
 static linkaddr_t from;
 static linkaddr_t dualband24_addr = {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }}; //empty address
-
-typedef struct {
+#pragma pack(push,1)
+static struct hare_stats_t{
     uint8_t header; //header includes message type and node id
     
     int16_t temperature, humidity;   
@@ -70,9 +70,9 @@ typedef struct {
     uint16_t permil_radio_on; // ‰ gotten through energest
     uint16_t permil_tx;
     uint16_t permil_rx;
-    } hare_stats_t;
+    } hare_stats;
+#pragma pack(pop)
 
-static hare_stats_t hare_stats; 
 //TIMERS 
 //static clock_time_t time_until_poll;
 static clock_time_t time_of_beacon_rx;

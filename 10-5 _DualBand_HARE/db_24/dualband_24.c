@@ -63,7 +63,7 @@ typedef struct data_t{
 } data_t;
 struct data_t datas; 
 
-
+#pragma pack(push,1) //REMOVE PADDING
 static struct hare_stats_t{
     uint8_t header; //header includes message type and node id
     
@@ -75,6 +75,7 @@ static struct hare_stats_t{
     uint16_t permil_tx;
     uint16_t permil_rx;
     } hare_stats;
+#pragma pack(pop)
 
 char buf_in[100];
 uint8_t beacon[3];
@@ -243,14 +244,13 @@ while (1){
     memcpy(&hare_stats, bytebuf, cb_len);
     LOG_INFO("header: msgid %d 2nd field %d", (hare_stats.header&0b11100000) >>5, hare_stats.header&0b00011111);
     LOG_DBG("Received %u bytes: n_beacons: %d n_tx %d permil_radio %d permil_tx %d permil_rx %d\n", cb_len, hare_stats.n_beacons_received, hare_stats.n_transmissions, hare_stats.permil_radio_on, hare_stats.permil_tx, hare_stats.permil_rx);
-
   }
   
 
    
-  frame_header = (hare_stats.header&0b11100000) >>5;
+  frame_header = (bytebuf[0]&0b11100000) >>5;
   
-  header_rx_msg = ( hare_stats.header&0b00011111);
+  header_rx_msg = ( bytebuf[0] & 0b00011111);
   uint8_t len_little = (uint8_t)cb_len + 1; // +1 for the header //¿¿¿¿???
   
   printf("header: %d, header_rx_msg: %d, len_little: %d\n", frame_header, header_rx_msg, len_little);
