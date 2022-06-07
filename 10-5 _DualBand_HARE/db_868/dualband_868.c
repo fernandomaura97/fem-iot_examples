@@ -38,18 +38,34 @@
 #define LOG_LEVEL LOG_LEVEL_DBG
 
 
-typedef struct data_t{
-  int16_t temperature, humidity;
-  uint16_t noise;
-} data_t;
+#pragma pack(push,1) //REMOVE PADDING
+typedef struct hare_stats_t{
+    uint8_t header; //header includes message type and node id
+    int16_t temperature, humidity;   
+    uint8_t power_tx;
+    uint16_t n_beacons_received;
+    uint16_t n_transmissions; 
+    uint16_t permil_radio_on; // ‰ gotten through energest
+    uint16_t permil_tx;
+    uint16_t permil_rx;
+    } hare_stats_t;
+#pragma pack(pop)
 
-//static struct data_t datas; 
+#pragma pack(push,1)
+typedef struct aggregation_stats_t{
+  struct hare_stats_t p1;
+  struct hare_stats_t p2;
+ } aggregation_msg;
+#pragma pack(pop)
 
-//static struct etimer et;
+static uint8_t buffer_aggregation[sizeof(aggregation_msg)]; //buffer for sending aggregated data
+
+
+
 uint16_t counter_uart;
 static char buf_in[100];
 //static uint8_t buffer[7];
-static uint8_t global_ag_buf[12];
+static uint8_t global_ag_buf[sizeof(buffer_aggregation)];
 const char delimitador[3] = " ";
 long int sortida[3];
 char* endPtr;
@@ -143,7 +159,7 @@ void serial_in(){
     LOG_DBG("incoming string: %s\n", copy_buffer);
 
     char *token = strtok(copy_buffer, delimitador);
-    uint8_t buffer_aggregated[12];
+    //uint8_t buffer_aggregated[12];
 
     LOG_DBG("token: %s\n", token);
     if (strncmp(token, "P0", sizeof("P0")) == 0){
@@ -151,13 +167,13 @@ void serial_in(){
       while(token != NULL) {
           // printf("token: %s \n", token);
           token = strtok(NULL, delimitador);
-          buffer_aggregated[i] = atoi(token);
-          LOG_DBG("buffer_aggregated[%d]: %d\n ", i, buffer_aggregated[i]);
+          buffer_aggregation[i] = atoi(token);
+          LOG_DBG("buffer_aggregated[%d]: %d\n ", i, buffer_aggregation[i]);
           i++;
-          if(i==12){break;}
+          if(i==32){break;}
 
       }//while
-      memcpy(global_ag_buf, buffer_aggregated, 12);
+      memcpy(global_ag_buf, buffer_aggregation, sizeof(buffer_aggregation));
       uart_rx_flag = true; 
     } //if
     else{
