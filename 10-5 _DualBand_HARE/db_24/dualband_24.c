@@ -206,7 +206,7 @@ PROCESS_THREAD(dualband_24, ev, data){
   //static struct etimer et;
   PROCESS_BEGIN();
 
-  nullnet_set_input_call printf(sizeof(aggregation_msg));back(input_callback);
+  nullnet_set_input_callback(input_callback);
   uart_set_input(1, print_uart);
 
   while(1){  
@@ -219,7 +219,7 @@ PROCESS_THREAD(dualband_24, ev, data){
     char sprinter[100];
     //sprintf for all elements in the buffer_aggregation
     sprintf(sprinter, "P0, %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", buffer_aggregation[0], buffer_aggregation[1], buffer_aggregation[2], buffer_aggregation[3], buffer_aggregation[4], buffer_aggregation[5], buffer_aggregation[6], buffer_aggregation[7], buffer_aggregation[8], buffer_aggregation[9], buffer_aggregation[10], buffer_aggregation[11], buffer_aggregation[12], buffer_aggregation[13], buffer_aggregation[14], buffer_aggregation[15], buffer_aggregation[16], buffer_aggregation[17], buffer_aggregation[18], buffer_aggregation[19], buffer_aggregation[20], buffer_aggregation[21], buffer_aggregation[22], buffer_aggregation[23], buffer_aggregation[24], buffer_aggregation[25], buffer_aggregation[26], buffer_aggregation[27], buffer_aggregation[28], buffer_aggregation[29], buffer_aggregation[30], buffer_aggregation[31]);
-    
+
 
     printf("%s", sprinter);
 
