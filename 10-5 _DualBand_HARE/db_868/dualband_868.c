@@ -151,7 +151,7 @@ void input_callback(const void *data, uint16_t len,
 }
 
 void serial_in(){
-
+    printf("yoyooyoy");
     char delimitador[] = ",";
     char copy_buffer[100]; 
     strcpy(copy_buffer, buf_in);
@@ -516,7 +516,7 @@ PROCESS_THREAD(poll_process,ev,data)
       nullnet_buf = (uint8_t *) &global_ag_buf;
       nullnet_len = sizeof(global_ag_buf);
 
-      LOG_DBG("Sending aggregated data: %d %d %d %d %d %d %d %d %d %d %d %d\n", global_ag_buf[0], global_ag_buf[1], global_ag_buf[2], global_ag_buf[3], global_ag_buf[4], global_ag_buf[5], global_ag_buf[6], global_ag_buf[7], global_ag_buf[8], global_ag_buf[9], global_ag_buf[10], global_ag_buf[11]);
+      LOG_DBG("Sending aggregated data: %d %d %d %d %d %d %d %d %d %d %d %d etc etc etc\n", global_ag_buf[0], global_ag_buf[1], global_ag_buf[2], global_ag_buf[3], global_ag_buf[4], global_ag_buf[5], global_ag_buf[6], global_ag_buf[7], global_ag_buf[8], global_ag_buf[9], global_ag_buf[10], global_ag_buf[11]);
       NETSTACK_NETWORK.output(NULL);
     }
     else{

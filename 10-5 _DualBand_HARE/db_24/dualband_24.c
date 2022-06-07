@@ -120,7 +120,7 @@ unsigned int uart1_send_bytes(const unsigned char *s, unsigned int len){
 }
 
 void serial_in(){ // Implementa la lògica a la cadena de caràcters que ha entrat al UART. node_db_24
-
+    printf("yoyyoyoyoyo");
     char buffer_header[20];
     strcpy(buffer_header, buf_in);
     char *header; 
@@ -203,22 +203,22 @@ void input_callback(const void *data, uint16_t len,
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(dualband_24, ev, data){
 
-  //static struct etimer et;
+  static struct etimer et;
   PROCESS_BEGIN();
-
-  nullnet_set_input_callback(input_callback);
   uart_set_input(1, print_uart);
+  nullnet_set_input_callback(input_callback);
+  
 
   while(1){  
 
     PROCESS_WAIT_EVENT_UNTIL( ev == PROCESS_EVENT_POLL);
-   
 
-    printf("HIIIIi \n");  //only polled after the aggregated message buffer is full!!
-
+    etimer_set(&et, CLOCK_SECOND * 5);
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et)); //SOME delay needed for db_868 UART to be available
+    LOG_INFO("sending through UART the aggregated msg\n"); //TODO: CHANGE SO IF WINDOW EXPIRES ALSO SEND THE RECEIVED DATA
     char sprinter[100];
     //sprintf for all elements in the buffer_aggregation
-    sprintf(sprinter, "P0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", buffer_aggregation[0], buffer_aggregation[1], buffer_aggregation[2], buffer_aggregation[3], buffer_aggregation[4], buffer_aggregation[5], buffer_aggregation[6], buffer_aggregation[7], buffer_aggregation[8], buffer_aggregation[9], buffer_aggregation[10], buffer_aggregation[11], buffer_aggregation[12], buffer_aggregation[13], buffer_aggregation[14], buffer_aggregation[15], buffer_aggregation[16], buffer_aggregation[17], buffer_aggregation[18], buffer_aggregation[19], buffer_aggregation[20], buffer_aggregation[21], buffer_aggregation[22], buffer_aggregation[23], buffer_aggregation[24], buffer_aggregation[25], buffer_aggregation[26], buffer_aggregation[27], buffer_aggregation[28], buffer_aggregation[29], buffer_aggregation[30], buffer_aggregation[31]);
+    sprintf(sprinter, "P0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", buffer_aggregation[0], buffer_aggregation[1], buffer_aggregation[2], buffer_aggregation[3], buffer_aggregation[4], buffer_aggregation[5], buffer_aggregation[6], buffer_aggregation[7], buffer_aggregation[8], buffer_aggregation[9], buffer_aggregation[10], buffer_aggregation[11], buffer_aggregation[12], buffer_aggregation[13], buffer_aggregation[14], buffer_aggregation[15], buffer_aggregation[16], buffer_aggregation[17], buffer_aggregation[18], buffer_aggregation[19], buffer_aggregation[20], buffer_aggregation[21], buffer_aggregation[22], buffer_aggregation[23], buffer_aggregation[24], buffer_aggregation[25], buffer_aggregation[26], buffer_aggregation[27], buffer_aggregation[28], buffer_aggregation[29], buffer_aggregation[30], buffer_aggregation[31]);
 
 
     printf("%s", sprinter);
@@ -240,7 +240,7 @@ uint8_t header_rx_msg;
 uint8_t frame_header; 
 
 PROCESS_BEGIN();
-
+PROCESS_YIELD();
 while (1){
 
   PROCESS_WAIT_EVENT_UNTIL(PROCESS_EVENT_POLL);
@@ -308,16 +308,12 @@ while (1){
     
             //memcpy(&ha, &hare_stats, sizeof(hare_stats));
             aggregation_msg.p1 = hare_stats;
-            aggregator_flags.f_m1 = true; 
-    
-              
-              
+            aggregator_flags.f_m1 = true;              
             break;
             
           case NODEID2: 
             
             aggregation_msg.p2 = hare_stats; 
-
             aggregator_flags.f_m2 = true;
             break; 
           
@@ -343,7 +339,7 @@ while (1){
           }
           printf("\n");
 
-          LOG_INFO("sending through UART the aggregated msg\n"); //TODO: CHANGE SO IF WINDOW EXPIRES ALSO SEND THE RECEIVED DATA
+          
           process_poll(&dualband_24);
         }
         break;
@@ -374,7 +370,7 @@ PROCESS_END();
 
 PROCESS_THREAD(sender, ev,data){
   PROCESS_BEGIN();
-
+  PROCESS_YIELD();
   while(1){
 
     PROCESS_WAIT_EVENT_UNTIL(PROCESS_EVENT_POLL);
