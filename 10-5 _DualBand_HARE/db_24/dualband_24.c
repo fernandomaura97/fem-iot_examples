@@ -31,6 +31,8 @@
 
 #define LOG_MODULE "DB_24"
 #define LOG_LEVEL LOG_LEVEL_DBG
+#define COOJA 1 ///SET TO 0 FOR REAL TESTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+
 
 
 uint8_t buffer_aggregation[12];
@@ -46,7 +48,8 @@ PROCESS(sender, "sender");
 PROCESS(radio_receiver, "receiver");
 PROCESS(window_process, "RX window process");
 PROCESS(association_process, "assoc process");
-AUTOSTART_PROCESSES(&dualband_24, &sender, &radio_receiver,&window_process, &association_process);
+PROCESS(cooja_beacons, "cooja beacons");
+AUTOSTART_PROCESSES(&dualband_24, &sender, &radio_receiver,&window_process, &association_process, &cooja_beacons);
 /*---------------------------------------------------------------------------*/
 
 static linkaddr_t from; 
@@ -57,12 +60,21 @@ typedef struct data_t{
   int16_t temperature, humidity;
   uint16_t noise;
   //add more sensor data here
-
-
-
 } data_t;
-
 struct data_t datas; 
+
+
+static struct hare_stats_t{
+    uint8_t header; //header includes message type and node id
+    
+    int16_t temperature, humidity;   
+    uint8_t power_tx;
+    uint16_t n_beacons_received;
+    uint16_t n_transmissions; 
+    uint16_t permil_radio_on; // ‰ gotten through energest
+    uint16_t permil_tx;
+    uint16_t permil_rx;
+    } hare_stats;
 
 char buf_in[100];
 uint8_t beacon[3];
@@ -225,6 +237,8 @@ while (1){
   
   bytebuf = packetbuf_dataptr();
   //printf("length: %d , \n", cb_len);
+  
+
    
   frame_header = (bytebuf[0] & 0b11100000)>>5;
   
@@ -257,11 +271,26 @@ while (1){
         //    len_little is size of the "submessage", will be useful later if buffer is to be allocated dynamically!
 
           case NODEID1:
-
+    /*
             memcpy(&buffer_aggregation[0], &bytebuf[0] , sizeof(uint8_t)); //bytebuf[0] is the header: (4)<<5 | NODEID_rx 
             memcpy(&buffer_aggregation[1], &len_little, sizeof(uint8_t));
             memcpy(&buffer_aggregation[2], &bytebuf[1], 2*sizeof(datas.temperature)); //It will fill bytes 2 to 5 with the temperature data
             aggregator_flags.f_m1 = true; 
+    */
+        if(cb_len ==sizeof(hare_stats))
+  {
+        memcpy(&hare_stats, bytebuf, cb_len);
+        LOG_DBG("Received %u bytes: n_beacons: %d n_tx %d permil_radio %d permil_tx %d permil_rx %d\n", cb_len, hare_stats.n_beacons_received, hare_stats.n_transmissions, hare_stats.permil_radio_on, hare_stats.permil_tx, hare_stats.permil_rx);
+  
+        /*  
+        TODO:
+        -test 
+        -aggregate to bigger struct
+        -activate flag
+        */
+  
+  }
+
             break;
             
           case NODEID2: 
@@ -411,3 +440,32 @@ PROCESS_THREAD(association_process, ev, data)
     
     PROCESS_END();
 }
+
+PROCESS_THREAD(cooja_beacons, ev,data){
+
+static struct etimer cooja_timer;
+
+  PROCESS_BEGIN();
+  #if COOJA
+    etimer_set(&cooja_timer, 10*CLOCK_SECOND);
+
+    while(1){
+
+      PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&cooja_timer));
+      
+      beacon[0] = 0x00;
+      beacon[1] = 0xff;
+      beacon[2] = 0x00;
+    
+      nullnet_buf = (uint8_t*)beacon;
+      nullnet_len = sizeof(beacon);
+
+      NETSTACK_NETWORK.output(NULL);
+      printf("broadcasting BEACON: %d, %d, %d\n", beacon[0], beacon[1], beacon[2]);
+      etimer_set(&cooja_timer, 60*CLOCK_SECOND);
+    }
+
+  #endif
+  PROCESS_END();
+}
+
