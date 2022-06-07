@@ -84,7 +84,7 @@ static struct aggregation_stats_t{
  } aggregation_msg;
 #pragma pack(pop)
 
-uint8_t buffer_aggregation[2*sizeof(hare_stats)]; //buffer for sending aggregated data
+uint8_t buffer_aggregation[sizeof(aggregation_msg)]; //buffer for sending aggregated data
 
 char buf_in[100];
 uint8_t beacon[3];
@@ -212,11 +212,13 @@ PROCESS_THREAD(dualband_24, ev, data){
   while(1){  
 
     PROCESS_WAIT_EVENT_UNTIL( ev == PROCESS_EVENT_POLL);
+   
+
     printf("HIIIIi \n");  //only polled after the aggregated message buffer is full!!
 
     char sprinter[100];
-    sprintf(sprinter, "P0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", buffer_aggregation[0], buffer_aggregation[1], buffer_aggregation[2], buffer_aggregation[3], buffer_aggregation[4], buffer_aggregation[5], buffer_aggregation[6], buffer_aggregation[7], buffer_aggregation[8], buffer_aggregation[9], buffer_aggregation[10], buffer_aggregation[11]); 
-   
+    //sprintf something something
+
     printf("%s", sprinter);
 
     uart1_send_bytes((unsigned char *)sprinter, strlen(sprinter));
@@ -327,6 +329,18 @@ while (1){
         {
           aggregator_flags.f_m1 = false;
           aggregator_flags.f_m2 = false; 
+          
+          printf("data inside struct 1 is: %d %d %d %d %d %d %d %d %d\n", aggregation_msg.p1.header,  aggregation_msg.p1.temperature,  aggregation_msg.p1.humidity,  aggregation_msg.p1.power_tx  , aggregation_msg.p1.n_beacons_received, aggregation_msg.p1.n_transmissions, aggregation_msg.p1.permil_radio_on, aggregation_msg.p1.permil_tx, aggregation_msg.p1.permil_rx);
+          printf("data inside struct 2 is  %d %d %d %d %d %d %d %d %d\n", aggregation_msg.p2.header,  aggregation_msg.p2.temperature,  aggregation_msg.p2.humidity,  aggregation_msg.p2.power_tx,  aggregation_msg.p2.n_beacons_received, aggregation_msg.p2.n_transmissions, aggregation_msg.p2.permil_radio_on, aggregation_msg.p2.permil_tx, aggregation_msg.p2.permil_rx);
+
+          memcpy(&buffer_aggregation[0], &aggregation_msg, sizeof(aggregation_msg));
+          printf("Buffer of aggregated message is: ");
+          for (int i = 0; i < sizeof(buffer_aggregation); i++)
+          {
+          printf("%d ", buffer_aggregation[i]);
+          }
+          printf("\n");
+
           LOG_INFO("sending through UART the aggregated msg\n"); //TODO: CHANGE SO IF WINDOW EXPIRES ALSO SEND THE RECEIVED DATA
           process_poll(&dualband_24);
         }
