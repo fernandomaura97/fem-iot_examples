@@ -31,7 +31,7 @@
 
 #define LOG_MODULE "DB_24"
 #define LOG_LEVEL LOG_LEVEL_DBG
-#define COOJA 1 ///SET TO 0 FOR REAL TESTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+#define COOJA 0 ///SET TO 0 FOR REAL TESTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
 
 
@@ -472,11 +472,11 @@ PROCESS_THREAD(association_process, ev, data)
 }
 
 PROCESS_THREAD(cooja_beacons, ev,data){
-
+#if COOJA
 static struct etimer cooja_timer;
 
   PROCESS_BEGIN();
-  #if COOJA
+  
     etimer_set(&cooja_timer, 10*CLOCK_SECOND);
 
     while(1){
@@ -495,6 +495,9 @@ static struct etimer cooja_timer;
       etimer_set(&cooja_timer, 60*CLOCK_SECOND);
     }
 
+  
+  #else
+  PROCESS_BEGIN();
   #endif
   PROCESS_END();
 }
