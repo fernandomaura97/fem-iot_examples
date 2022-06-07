@@ -418,7 +418,7 @@ PROCESS_THREAD(callback_process,ev,data){
                 printf("RAW DATA!!: ");
 
                 for(int i = 0; i<sizeof(aggregation_msg); i++){
-                    printf("%d ", ag_msg.data[i]);
+                    printf("%d ", buf[i]);
                 }
                 printf("\n");
                 
