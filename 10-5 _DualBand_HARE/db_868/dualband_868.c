@@ -192,7 +192,7 @@ int print_uart(unsigned char c){
 	counter_uart++;
 
 	if (c == '\n'){
-		printf("SERIAL DATA IN --> %s\n", (char *)buf_in);
+		//printf("SERIAL DATA IN --> %s\n", (char *)buf_in);
 		counter_uart = 0;
 		serial_in();
 	}
