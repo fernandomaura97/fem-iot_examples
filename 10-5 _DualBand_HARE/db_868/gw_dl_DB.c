@@ -413,6 +413,14 @@ PROCESS_THREAD(callback_process,ev,data){
             if(cb_len == sizeof(aggregation_msg)){
                 static aggregation_msg ag_msg; 
                 memcpy(&ag_msg, buf, sizeof(aggregation_msg));
+
+
+                printf("RAW DATA!!: ");
+
+                for(int i = 0; i<sizeof(aggregation_msg); i++){
+                    printf("%d ", ag_msg.data[i]);
+                }
+                printf("\n");
                 
                 printf("Aggregation message received\n");
                 printf("t1 %d h1 %d", ag_msg.p1.temperature, ag_msg.p1.humidity);
