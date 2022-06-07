@@ -4,6 +4,6 @@
 /*---------------------------*/
 #define IEEE802154_CONF_DEFAULT_CHANNEL 10
 
-
+#define ENERGEST_CONF_ON 1
 
 #endif /* PROJECT_CONF_H_ */

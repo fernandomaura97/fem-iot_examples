@@ -294,7 +294,7 @@ while (1){
                 -aggregate to bigger struct
                 -activate flag
             */
-
+              }
 
       switch(header_rx_msg) {
         //let's assume all incoming traffic is DHT22: temp and humidity.
@@ -307,7 +307,7 @@ while (1){
             aggregator_flags.f_m1 = true; 
     
               
-              }
+              
             break;
             
           case NODEID2: 

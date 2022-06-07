@@ -8,6 +8,7 @@
 #include "dev/dht22.h"
 #include <stdlib.h>
 #include "net/packetbuf.h"
+#include "sys/energest.h"
 
 //#include "sys/energest.h"
 
@@ -58,6 +59,19 @@
 
 static linkaddr_t from;
 static linkaddr_t dualband24_addr = {{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }}; //empty address
+#pragma pack(push,1)
+static struct hare_stats_t{
+    uint8_t header; //header includes message type and node id
+    
+    int16_t temperature, humidity;   
+    uint8_t power_tx;
+    uint16_t n_beacons_received;
+    uint16_t n_transmissions; 
+    uint16_t permil_radio_on; // ‰ gotten through energest
+    uint16_t permil_tx;
+    uint16_t permil_rx;
+    } hare_stats;
+#pragma pack(pop)
 
 //TIMERS 
 //static clock_time_t time_until_poll;
@@ -112,6 +126,13 @@ uint8_t am_i_polled(uint8_t bitmask, uint8_t id)  //prints which nodes the beaco
         return 0; 
     }         
 }
+
+void send_and_count(const linkaddr_t *dest)
+{
+    NETSTACK_NETWORK.output(dest);
+    hare_stats.n_transmissions++;   
+        }
+    
 //function to print the number of the NODEID (f.e. NODEID8 would return 8)
 uint8_t get_nodeid(uint8_t id)
 {
@@ -128,7 +149,7 @@ uint8_t get_nodeid(uint8_t id)
 
 void m_and_send_dht22(uint8_t id)
 {
-    uint8_t buf_dht22[5];
+    //uint8_t buf_dht22[5];
     int16_t temperature, humidity;
 
     SENSORS_ACTIVATE(dht22);
@@ -148,23 +169,22 @@ void m_and_send_dht22(uint8_t id)
         LOG_ERR("FAILED TO READ DHT22\n");
     }
     
-    
-    buf_dht22[0] = 0b10000000 | id;
-    memcpy(&buf_dht22[1], &temperature, sizeof(temperature));
-    memcpy(&buf_dht22[3], &humidity, sizeof(humidity));
+    hare_stats.header = 0b10000000|id;
+    hare_stats.temperature = temperature;
+    hare_stats.humidity = humidity;
 
-<<<<<<< HEAD
-     printf("sending %d %d %d %d %d \n" , buf_dht22[0], buf_dht22[1], buf_dht22[2], buf_dht22[3], buf_dht22[4]);
-=======
-    printf("Sending DHT22 data: %d %d %d %d %d\n", buf_dht22[0], buf_dht22[1], buf_dht22[2], buf_dht22[3], buf_dht22[4]); 
->>>>>>> 19583e3a829fcf88bbe5bad1a26ee3eabf8f99c9
- 
-
-    nullnet_buf = (uint8_t *)&buf_dht22;
-    nullnet_len = sizeof(buf_dht22);
-    NETSTACK_NETWORK.output(&dualband24_addr); 
     
-    LOG_DBG("Sending DHT22 data\n");
+    nullnet_buf = (uint8_t *)&hare_stats;
+    nullnet_len = sizeof(hare_stats);
+    //NETSTACK_NETWORK.output(&dualband24_addr); 
+    send_and_count(&dualband24_addr);
+    LOG_DBG("Sending hare data and stats: %d %d %d %d %d %d %d\n", 
+    hare_stats.header, hare_stats.temperature, hare_stats.humidity, 
+    hare_stats.n_transmissions, hare_stats.n_beacons_received, 
+    hare_stats.permil_radio_on, hare_stats.permil_tx);
+
+    
+    //SENSORS_DEACTIVATE(dht22);
     SENSORS_DEACTIVATE(dht22);
     return; 
 }
@@ -191,7 +211,7 @@ uint8_t datasender( uint8_t id )
         megabuf[0] = 0b10000000 | id;
         memcpy(&megabuf[1], &mydata.co, sizeof(mydata.co));
         memcpy(&megabuf[5], &mydata.no2, sizeof(mydata.no2));
-       
+        printf("Sending %d %d %d %d %d %d %d %d %d\n", megabuf[0], megabuf[1], megabuf[2], megabuf[3], megabuf[4], megabuf[5], megabuf[6], megabuf[7], megabuf[8]);
 
         //make sure it's correct data
         
@@ -200,8 +220,8 @@ uint8_t datasender( uint8_t id )
         nullnet_len = sizeof(megabuf);
 
        
-        NETSTACK_NETWORK.output(NULL); 
-      
+        //NETSTACK_NETWORK.output(NULL); 
+        send_and_count(NULL);
         return 1;
     }
     else if(id == 2 || id == 4){
@@ -214,7 +234,8 @@ uint8_t datasender( uint8_t id )
 
         nullnet_buf = (uint8_t *)&megabuf;
         nullnet_len = sizeof(megabuf);
-        NETSTACK_NETWORK.output(NULL); 
+        //NETSTACK_NETWORK.output(NULL); 
+        send_and_count(NULL);
         return 1;
 
     }
@@ -238,7 +259,8 @@ uint8_t datasender( uint8_t id )
 
         nullnet_buf = (uint8_t *)&megabuf;
         nullnet_len = sizeof(megabuf);
-        NETSTACK_NETWORK.output(NULL); 
+        send_and_count(NULL);
+        //NETSTACK_NETWORK.output(NULL); 
     }
     else if(id == 7 || id == 8){
         printf("Node %d, PM10\n", id);
@@ -248,7 +270,8 @@ uint8_t datasender( uint8_t id )
 
         nullnet_buf = (uint8_t *)&megabuf;
         nullnet_len = sizeof(megabuf);
-        NETSTACK_NETWORK.output(NULL); 
+        send_and_count(NULL);
+        //NETSTACK_NETWORK.output(NULL); 
     }
     else{
         printf("?");
@@ -258,14 +281,19 @@ uint8_t datasender( uint8_t id )
 
 }
 
+static inline unsigned long
+to_seconds(uint64_t time)
+{
+  return (unsigned long)(time / ENERGEST_SECOND);
+}
 /*---------------------------------------------------------------------------*/
 
 PROCESS(poll_process, "STA process");
 PROCESS(associator_process,"associator process");
 PROCESS(rx_process, "Radio process");
-//PROCESS(energest_example_process, "energest");
+PROCESS(energest_example_process, "energest");
 //AUTOSTART_PROCESSES(&rx_process, &associator_process, &poll_process, &energest_example_process);
-AUTOSTART_PROCESSES(&rx_process, &associator_process, &poll_process);
+AUTOSTART_PROCESSES(&rx_process, &associator_process, &poll_process, &energest_example_process);
 /*---------------------------------------------------------------------------*/
 
 void input_callback(const void *data, uint16_t len,
@@ -312,6 +340,12 @@ PROCESS_THREAD(rx_process,ev,data)
     nodeid = (random_rand() % 8) + 1;
     #endif
     printf("***NODEID***: %d\n", nodeid);
+    
+    //initialize the struct 
+    hare_stats.n_beacons_received = 0; 
+    hare_stats.n_transmissions = 0;
+    hare_stats.permil_radio_on = 0; 
+    hare_stats.power_tx = 0; 
 
     //PROCESS_YIELD();
     while(1)
@@ -325,13 +359,15 @@ PROCESS_THREAD(rx_process,ev,data)
         //switch(frame_header ) {
 
         if(frame_header ==0){
+           
             printf("Beacon received from address ");
             LOG_INFO_LLADDR(&from);
             printf("\n");
                         
             if(!beaconrx_f){ //if it's the first beacon received on this cycle
 
-                
+                hare_stats.n_beacons_received++; 
+                                
                 linkaddr_copy(&dualband24_addr, &from); //store coordinator address
                 
                 uint8_t Beacon_no = datapoint[0] & 0b00011111;
@@ -380,7 +416,7 @@ PROCESS_THREAD(rx_process,ev,data)
                 is_associated = true; 
                 PROCESS_CONTEXT_END(&associator_process);
 
-                process_poll(&poll_process);
+                process_poll(&poll_process); //only happens first time, not associated
             }
             else{
                 LOG_DBG("error, different adresses");
@@ -451,6 +487,7 @@ PROCESS_THREAD(associator_process, ev,data){
                 etimer_set(&asotimer, 2* CLOCK_SECOND + (random_rand() % (CLOCK_SECOND)));   //add some jitter/randomness for the transmission   
                 
                 NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, power_levels[i_pwr]);
+                hare_stats.power_tx = power_levels[i_pwr];
                 
                 
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&asotimer));
@@ -458,8 +495,8 @@ PROCESS_THREAD(associator_process, ev,data){
                 if(is_associated ==1 ){break;}
 
                 printf("Sending assoc. Request, tx power: %02x\n", power_levels[i_pwr]);
-                NETSTACK_NETWORK.output(&dualband24_addr);
-                
+                //NETSTACK_NETWORK.output(&dualband24_addr);
+                send_and_count(&dualband24_addr);
                                 
             }
             if(!is_associated) 
@@ -472,7 +509,7 @@ PROCESS_THREAD(associator_process, ev,data){
             printf("I'm already associated\n");
             printf("bitmask: %02x, nodeid: %d\n", bitmask, nodeid);
             
-            
+            process_poll(&poll_process);
         }
 
 
@@ -592,7 +629,6 @@ PROCESS_THREAD(poll_process, ev,data){
 // This Process will periodically print energest values for the last minute.
 
 
-/*
 PROCESS_THREAD(energest_example_process, ev, data)
 {
   static struct etimer periodic_timer;
@@ -604,11 +640,10 @@ PROCESS_THREAD(energest_example_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
     etimer_reset(&periodic_timer);
 
-    
-     * Update all energest times. Should always be called before energest
-     * times are read.
-     
     energest_flush();
+
+
+    //UNNECESARY, DELETE WHEN TESTED
 
     printf("\nEnergest:\n");
     printf(" CPU          %4lus LPM      %4lus DEEP LPM %4lus  Total time %lus\n",
@@ -616,17 +651,31 @@ PROCESS_THREAD(energest_example_process, ev, data)
            to_seconds(energest_type_time(ENERGEST_TYPE_LPM)),
            to_seconds(energest_type_time(ENERGEST_TYPE_DEEP_LPM)),
            to_seconds(ENERGEST_GET_TOTAL_TIME()));
+
     printf(" Radio LISTEN %4lus TRANSMIT %4lus OFF      %4lus\n",
            to_seconds(energest_type_time(ENERGEST_TYPE_LISTEN)),
            to_seconds(energest_type_time(ENERGEST_TYPE_TRANSMIT)),
            to_seconds(ENERGEST_GET_TOTAL_TIME()
                       - energest_type_time(ENERGEST_TYPE_TRANSMIT)
                       - energest_type_time(ENERGEST_TYPE_LISTEN)));
+
+
+    //HARE STATS FLUSH
+
+    hare_stats.permil_radio_on = (ENERGEST_GET_TOTAL_TIME()
+                                  - energest_type_time(ENERGEST_TYPE_TRANSMIT)
+                                  - energest_type_time(ENERGEST_TYPE_LISTEN))
+                                 * 1000 / ENERGEST_GET_TOTAL_TIME();
+    hare_stats.permil_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT)
+                           * 1000 / ENERGEST_GET_TOTAL_TIME();
+    hare_stats.permil_rx = energest_type_time(ENERGEST_TYPE_LISTEN)
+                           * 1000 / ENERGEST_GET_TOTAL_TIME();
   }
 
   PROCESS_END();
 }
-*/
+
+
 
 
 
