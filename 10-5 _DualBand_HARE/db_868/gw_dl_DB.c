@@ -59,6 +59,27 @@ typedef struct sensor_data_t {
 static struct sensor_data_t sensor_data;
 
 
+#pragma pack(push,1)
+typedef struct hare_stats_t{
+    uint8_t header; //header includes message type and node id
+    int16_t temperature, humidity;   
+    uint8_t power_tx;
+    uint16_t n_beacons_received;
+    uint16_t n_transmissions; 
+    uint16_t permil_radio_on; // ‰ gotten through energest
+    uint16_t permil_tx;
+    uint16_t permil_rx;
+    } hare_stats_t;
+#pragma pack(pop)
+
+#pragma pack(push,1)
+typedef struct aggregation_stats_t{
+  struct hare_stats_t p1;
+  struct hare_stats_t p2;
+ } aggregation_msg;
+#pragma pack(pop)
+
+//static uint8_t buffer_aggregation[sizeof(aggregation_msg)]; //buffer for sending aggregated data
 
 
 static uint16_t cb_len;
@@ -368,6 +389,7 @@ PROCESS_THREAD(callback_process,ev,data){
 
         LOG_DBG("buf %d %d %d\n", buf[0], buf[1], buf[2]);
         frame = (buf[0] & 0b11100000)>>5;
+        uint8_t frame2 = (buf[0] & 0b00011111);
         
         if (frame == 0){
             LOG_DBG("Beacon received ??\n %d %d %d \n", buf[0], buf[1], buf[2]);
@@ -388,11 +410,19 @@ PROCESS_THREAD(callback_process,ev,data){
         else if( frame ==4){
             LOG_DBG("Sensor Data received\n");
             //process_poll(&parser_process);
+            if(cb_len == sizeof(aggregation_msg)){
+                static aggregation_msg ag_msg; 
+                memcpy(&ag_msg, buf, sizeof(aggregation_msg));
+                
+                printf("Aggregation message received\n");
+                printf("t1 %d h1 %d", ag_msg.p1.temperature, ag_msg.p1.humidity);
+                printf("t2 %d h2 %d", ag_msg.p2.temperature, ag_msg.p2.humidity);                 
+                } 
                     poll_response_received = 1; //we received a poll response
                     //switch(buf[0] & 31){
                     LOG_DBG("header == %d\n" , buf[0]&0b00011111);
                     LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
-                    switch(buf[0] & 0b00011111) //last 5 bits of the first byte is for NodeID?
+                    switch(frame2) //last 5 bits of the first byte is for NodeID?
                     {
                         
                         case NODEID_MGAS2:
