@@ -428,8 +428,8 @@ PROCESS_THREAD(callback_process,ev,data){
                 } 
                     poll_response_received = 1; //we received a poll response
                     //switch(buf[0] & 31){
-                    LOG_DBG("header == %d\n" , buf[0]&0b00011111);
-                    LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+                    //LOG_DBG("header == %d\n" , buf[0]&0b00011111);
+                    //LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]); DEPRECATED
                     switch(frame2) //last 5 bits of the first byte is for NodeID?
                     {
                         
@@ -464,7 +464,7 @@ PROCESS_THREAD(callback_process,ev,data){
                     case NODEID_DHT22_1:
                     case NODEID_DHT22_2:
                     
-
+                        /*
                         memcpy(&sensor_data.id1, &buf[0], sizeof(buf[0]));
                         memcpy(&sensor_data.length1, &buf[1], sizeof(buf[1]));
                         //memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(int16_t));
@@ -494,10 +494,12 @@ PROCESS_THREAD(callback_process,ev,data){
                         u16_union.temp_array[0] = buf[10];
                         u16_union.temp_array[1] = buf[11];
                         memcpy(&sensor_data.value_humidity2, &u16_union.u16_var, sizeof(int16_t));
-                        
+                        */
+
+                       
                         //memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(int16_t));
 
-                        printf("ID1: %d\n", sensor_data.id1);
+                     /*   printf("ID1: %d\n", sensor_data.id1);                                                                                 DEPRECATED
                         printf("Length1: %d\n", sensor_data.length1);
                         printf("Value_temperature1: %02d.%02d\n", (sensor_data.value_temperature1)/10, (sensor_data.value_temperature1)%10);
                         printf("Value_humidity1: %02d.%02d\n", (sensor_data.value_humidity1)/10, (sensor_data.value_humidity1)%10);
@@ -506,7 +508,7 @@ PROCESS_THREAD(callback_process,ev,data){
                         printf("Length2: %d\n", sensor_data.length2);
                         printf("Value_temperature2: %02d.%02d\n", (sensor_data.value_temperature2)/10, (sensor_data.value_temperature2)%10);
                         printf("Value_humidity2: %02d.%02d\n", (sensor_data.value_humidity2)/10, (sensor_data.value_humidity2)%10);
-                    
+                    */
                         break;
                         
                     case NODEID_O3_1:
