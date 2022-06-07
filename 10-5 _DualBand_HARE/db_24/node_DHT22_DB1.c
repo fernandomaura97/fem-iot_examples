@@ -169,7 +169,7 @@ void m_and_send_dht22(uint8_t id)
         LOG_ERR("FAILED TO READ DHT22\n");
     }
     
-    hare_stats.header = 0b01000000|id;
+    hare_stats.header = 0b10000000|id;
     hare_stats.temperature = temperature;
     hare_stats.humidity = humidity;
 
