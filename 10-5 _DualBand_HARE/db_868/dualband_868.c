@@ -192,7 +192,7 @@ ctimer_callback(void *ptr)
   /* rearm the ctimer */
   bcon_flag = 0;
   NETSTACK_RADIO.on();
-  RTIMER_BUSYWAIT(5);
+  
   LOG_DBG("CTimer callback called, turning radio ON\n");
 }
 
