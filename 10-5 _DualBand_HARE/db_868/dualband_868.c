@@ -153,7 +153,7 @@ void input_callback(const void *data, uint16_t len,
 void serial_in(){
 
     char delimitador[] = ",";
-    char copy_buffer[50]; 
+    char copy_buffer[100]; 
     strcpy(copy_buffer, buf_in);
 
     LOG_DBG("incoming string: %s\n", copy_buffer);
