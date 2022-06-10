@@ -410,13 +410,14 @@ PROCESS_THREAD(callback_process,ev,data){
         else if( frame ==4){
             LOG_DBG("Sensor Data received\n");
             //process_poll(&parser_process);
-            if(cb_len == sizeof(aggregation_msg)){
+            if(cb_len == sizeof(aggregation_msg)){  //IF AGGREGATION MESSSAGE RECEIVED 
                 static aggregation_msg ag_msg; 
                 memcpy(&ag_msg, buf, sizeof(aggregation_msg));
 
 
-                printf("RAW DATA!!: ");
-
+                LOG_DBG("RAW DATA!!: ");
+                #if LOG_LEVEL == LOG_LEVEL_DBG
+               
                 for(int i = 0; i<sizeof(aggregation_msg); i++){
                     printf("%d ", buf[i]);
                 }
@@ -424,7 +425,16 @@ PROCESS_THREAD(callback_process,ev,data){
                 
                 printf("Aggregation message received\n");
                 printf("t1 %d h1 %d", ag_msg.p1.temperature, ag_msg.p1.humidity);
-                printf("t2 %d h2 %d", ag_msg.p2.temperature, ag_msg.p2.humidity);                 
+                printf("t2 %d h2 %d", ag_msg.p2.temperature, ag_msg.p2.humidity);  
+
+                //JSON parser: 
+
+
+                
+
+
+
+
                 } 
                     poll_response_received = 1; //we received a poll response
                     //switch(buf[0] & 31){
