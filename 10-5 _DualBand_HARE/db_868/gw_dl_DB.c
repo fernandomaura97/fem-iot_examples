@@ -60,23 +60,23 @@ static struct sensor_data_t sensor_data;
 
 
 #pragma pack(push,1)
-typedef struct hare_stats_t{
-    uint8_t header; //header includes message type and node id
-    int16_t temperature, humidity;   
-    uint8_t power_tx;
-    uint16_t n_beacons_received;
-    uint16_t n_transmissions; 
-    uint16_t permil_radio_on; // ‰ gotten through energest
-    uint16_t permil_tx;
-    uint16_t permil_rx;
-    } hare_stats_t;
+    typedef struct hare_stats_t{
+        uint8_t header; //header includes message type and node id
+        int16_t temperature, humidity;   
+        uint8_t power_tx;
+        uint16_t n_beacons_received;
+        uint16_t n_transmissions; 
+        uint16_t permil_radio_on; // ‰ gotten through energest
+        uint16_t permil_tx;
+        uint16_t permil_rx;
+        } hare_stats_t;
 #pragma pack(pop)
 
 #pragma pack(push,1)
-typedef struct aggregation_stats_t{
-  struct hare_stats_t p1;
-  struct hare_stats_t p2;
- } aggregation_msg;
+    typedef struct aggregation_stats_t{
+    struct hare_stats_t p1;
+    struct hare_stats_t p2;
+    } aggregation_msg;
 #pragma pack(pop)
 
 //static uint8_t buffer_aggregation[sizeof(aggregation_msg)]; //buffer for sending aggregated data
@@ -422,19 +422,18 @@ PROCESS_THREAD(callback_process,ev,data){
                     printf("%d ", buf[i]);
                 }
                 printf("\n");
+                #endif
                 
                 printf("Aggregation message received\n");
                 printf("t1 %d h1 %d", ag_msg.p1.temperature, ag_msg.p1.humidity);
                 printf("t2 %d h2 %d", ag_msg.p2.temperature, ag_msg.p2.humidity);  
-
-                //JSON parser: 
-
-
                 
-
-
-
-
+                //JSON parser: 
+                printf("{\"T1\": %d, \"H1\": %d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,
+                 \"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d, \"H2\": %d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d,
+                  \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n", ag_msg.p1.temperature, ag_msg.p1.humidity, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, 
+                  ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature, ag_msg.p2.humidity, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions,
+                   ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
                 } 
                     poll_response_received = 1; //we received a poll response
                     //switch(buf[0] & 31){
