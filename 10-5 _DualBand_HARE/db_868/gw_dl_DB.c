@@ -189,7 +189,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
 
     while(1)
     {   
-        bitmask = 0xff;
+        //bitmask = 0xff;
         LOG_DBG("Bitmask is %d\n", bitmask);
         printf("AA0\n"); //NODE-RED HEARTBEAT
         printf("LMC,%d",lost_message_counter);
