@@ -103,7 +103,7 @@ static linkaddr_t from;
 
 
 static char *rxdata;
-static uint8_t bitmask;
+static volatile uint8_t bitmask;
 
 static uint16_t lost_message_counter = 0;
 static bool poll_response_received = 0; 
@@ -616,8 +616,8 @@ PROCESS_THREAD(serial_process, ev, data)
             buf_bitmask = atoi(token);
 
             LOG_DBG("bitmask value (serial): %d\n", buf_bitmask);
-            bitmask = buf_bitmask; //store received bitmask for next cycle
-            
+            //bitmask = buf_bitmask; //store received bitmask for next cycle
+            memcpy(&bitmask, &buf_bitmask, sizeof(uint8_t));s
 
         }   
         else{
