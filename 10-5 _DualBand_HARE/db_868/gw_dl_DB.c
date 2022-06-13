@@ -423,10 +423,7 @@ PROCESS_THREAD(callback_process,ev,data){
                 }
                 printf("\n");
                 #endif
-                
-                printf("Aggregation message received\n");
-                printf("t1 %d h1 %d", ag_msg.p1.temperature, ag_msg.p1.humidity);
-                printf("t2 %d h2 %d", ag_msg.p2.temperature, ag_msg.p2.humidity);  
+            
                 
                 //JSON parser: 
                 printf(" { \"Nodeid_DB\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2,ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
