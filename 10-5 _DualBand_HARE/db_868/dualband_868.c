@@ -513,7 +513,7 @@ PROCESS_THREAD(poll_process,ev,data)
 
     if(uart_rx_flag == true){
 
-      global_ag_buf[0] = 0b01000000 | nodeid;
+      global_ag_buf[0] = 0b10000000 | nodeid;
       nullnet_buf = (uint8_t *) &global_ag_buf;
       nullnet_len = sizeof(global_ag_buf);
 
