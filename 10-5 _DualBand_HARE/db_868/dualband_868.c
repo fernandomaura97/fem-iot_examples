@@ -26,7 +26,7 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID NODEID2
+#define NODEID NODEID1
 
 
 #define T_MDB  (10 * CLOCK_SECOND)
@@ -513,6 +513,7 @@ PROCESS_THREAD(poll_process,ev,data)
 
     if(uart_rx_flag == true){
 
+      global_ag_buf[0] = 0b01000000 | nodeid;
       nullnet_buf = (uint8_t *) &global_ag_buf;
       nullnet_len = sizeof(global_ag_buf);
 
