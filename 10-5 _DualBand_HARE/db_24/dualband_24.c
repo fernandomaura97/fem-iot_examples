@@ -295,14 +295,20 @@ while (1){
         //let's assume all incoming traffic is DHT22: temp and humidity.
         //    len_little is size of the "submessage", will be useful later if buffer is to be allocated dynamically!
 
-          case NODEID1:
+          case NODEID1:  //TO BE TESTED!!!!**
+          case NODEID3:
+          case NODEID5:
+          case NODEID7:
     
             //memcpy(&ha, &hare_stats, sizeof(hare_stats));
             aggregation_msg.p1 = hare_stats;
             aggregator_flags.f_m1 = true;              
             break;
             
-          case NODEID2: 
+          case NODEID2:   //TO BE TESTED!!!!**
+          case NODEID4:
+          case NODEID6:
+          case NODEID8: 
             
             aggregation_msg.p2 = hare_stats; 
             aggregator_flags.f_m2 = true;
@@ -314,7 +320,7 @@ while (1){
         }
          LOG_DBG("Added %d bytes of data from node %d to buffer\n", cb_len, header_rx_msg);
     
-        if(aggregator_flags.f_m1 && aggregator_flags.f_m2)
+        if(aggregator_flags.f_m1 || aggregator_flags.f_m2)
         {
           aggregator_flags.f_m1 = false;
           aggregator_flags.f_m2 = false; 
@@ -323,13 +329,14 @@ while (1){
           printf("data inside struct 2 is  %d %d %d %d %d %d %d %d %d\n", aggregation_msg.p2.header,  aggregation_msg.p2.temperature,  aggregation_msg.p2.humidity,  aggregation_msg.p2.power_tx,  aggregation_msg.p2.n_beacons_received, aggregation_msg.p2.n_transmissions, aggregation_msg.p2.permil_radio_on, aggregation_msg.p2.permil_tx, aggregation_msg.p2.permil_rx);
 
           memcpy(&buffer_aggregation[0], &aggregation_msg, sizeof(aggregation_msg));
+        /*
           printf("Buffer of aggregated message is: ");
           for (int i = 0; i < sizeof(buffer_aggregation); i++)
           {
           printf("%d ", buffer_aggregation[i]);
           }
           printf("\n");
-
+        */
           
           process_poll(&dualband_24);
         }

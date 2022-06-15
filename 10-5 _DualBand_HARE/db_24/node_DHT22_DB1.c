@@ -590,7 +590,14 @@ PROCESS_THREAD(poll_process, ev,data){
         #if COOJA
             datasender(nodeid);
         #else
-            m_and_send_dht22(nodeid);
+           if(am_i_polled(bitmask, nodeid) ==1 ){
+                
+                m_and_send_dht22(nodeid);
+           }
+           else{
+
+                printf("I'm not polled, waiting for the next beacon\n");
+           }
         #endif
 
 
