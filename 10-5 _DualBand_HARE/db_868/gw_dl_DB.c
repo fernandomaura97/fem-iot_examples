@@ -8,11 +8,9 @@
 #include "random.h"
 #include "sys/clock.h"
 #include <stdlib.h>
-
 #include "dev/leds.h"
 #include "dev/uart.h"
 #include "dev/serial-line.h"
-
 #include "sys/log.h"
 
 
@@ -29,7 +27,15 @@
 #define NODEID_PM10_1 7
 #define NODEID_PM10_2 8
 
-
+//FOR BITMASKS
+#define NODEID1 1  // non-adaptive, test
+#define NODEID2 2 //DHT22
+#define NODEID3 4 // PM10 
+#define NODEID4 8
+#define NODEID5 16
+#define NODEID6 32
+#define NODEID7 64
+#define NODEID8 128
 
 typedef struct sensor_dataold_t {
   uint8_t nodeid;
@@ -85,22 +91,54 @@ typedef struct sensor_data_t {
 static uint16_t cb_len;
 static linkaddr_t from; 
 
-#define DEBUG 0
-
-/* PRINTF for debug? otherwise use LOG_DBG with LOG_LEVEL_DBG and not LOG_LEVEL_INFO
-#if DEBUG
-
-#define PRINTF(...) printf(__VA_ARGS__)
-
-#else //
-
-#define PRINTF(...)
-
-#endif //
-*/
+struct childs_polled_t {
+    uint8_t nodeid1;
+    uint8_t nodeid2;
+};
+typedef struct childs_polled_t childs_polled;
 
 #define ROUTENUMBER 8 //for now, then it should be bigger
 
+uint8_t get_nodeid(uint8_t id)
+{
+    uint8_t i;
+    for (i = 0; i < 8; i++)
+    {
+        if (id & (1 << i))
+        {
+            return (i+1);
+        }
+    }
+    return 0;
+}
+
+childs_polled get_childs_ID(uint8_t nodeid_t, childs_polled childs)
+{
+    
+    //printf("nodeid_t: %d\n", nodeid_t);
+    switch (nodeid_t)
+    {
+        case NODEID1:
+            childs.nodeid1 = NODEID1;
+            childs.nodeid2 = NODEID2;
+            break;
+        case NODEID2:
+            childs.nodeid1 = NODEID3;
+            childs.nodeid2 = NODEID4;
+            break;
+        case NODEID3:
+            childs.nodeid1 = NODEID5;
+            childs.nodeid2 = NODEID6;
+            break;
+        case NODEID4:
+            childs.nodeid1 = NODEID7;
+            childs.nodeid2 = NODEID8;
+            break;
+        default:
+            break;  
+    }
+    return childs;
+}
 
 static char *rxdata;
 static uint8_t bitmask;
@@ -414,6 +452,11 @@ PROCESS_THREAD(callback_process,ev,data){
                 static aggregation_msg ag_msg; 
                 memcpy(&ag_msg, buf, sizeof(aggregation_msg));
 
+                uint8_t nodeid_DB = frame2;
+
+                childs_polled kids_polled;
+                kids_polled = get_childs_ID(nodeid_DB, kids_polled);
+
 
                 LOG_DBG("RAW DATA!!: ");
                 #if LOG_LEVEL == LOG_LEVEL_DBG
@@ -426,143 +469,144 @@ PROCESS_THREAD(callback_process,ev,data){
             
                 
                 //JSON parser: 
-                printf(" { \"Nodeid_DB\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2,ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
-                } 
-                    poll_response_received = 1; //we received a poll response
-                    //switch(buf[0] & 31){
-                    //LOG_DBG("header == %d\n" , buf[0]&0b00011111);
-                    //LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]); DEPRECATED
-                    switch(frame2) //last 5 bits of the first byte is for NodeID?
-                    {
-                        
-                        case NODEID_MGAS2:
-                                    
-                        u.temp_array[0] = buf[1];
-                        u.temp_array[1] = buf[2];
-                        u.temp_array[2] = buf[3];
-                        u.temp_array[3] = buf[4];
-                        sensors.co = u.float_variable;
-                    
+                printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2, get_nodeid(kids_polled.nodeid1), get_nodeid(kids_polled.nodeid2),ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
+                
+            } 
+            poll_response_received = 1; //we received a poll response
+            //switch(buf[0] & 31){
+            //LOG_DBG("header == %d\n" , buf[0]&0b00011111);
+            //LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]); DEPRECATED
+            switch(frame2) //last 5 bits of the first byte is for NodeID?
+            {
+                
+                case NODEID_MGAS2:
+                            
+                u.temp_array[0] = buf[1];
+                u.temp_array[1] = buf[2];
+                u.temp_array[2] = buf[3];
+                u.temp_array[3] = buf[4];
+                sensors.co = u.float_variable;
+            
 
-                        u.temp_array[0] = buf[5];
-                        u.temp_array[1] = buf[6];
-                        u.temp_array[2] = buf[7];
-                        u.temp_array[3] = buf[8];
-                        sensors.no2 = u.float_variable;
-
-
-                        printf("{\"nodeID\": %d", buf[0] & 0b00011111);
-                        printf(",\"co\": ");
-                        fbuf = sensors.co * 100;
-                        printf("%lu.%02lu", fbuf/100, fbuf%100);
-                        printf(", \"no2\": ");
-                        fbuf = sensors.no2 * 100;
-                        printf("%lu.%02lu", fbuf/100, fbuf%100);
-                        printf("}\n");    
-                        break;
+                u.temp_array[0] = buf[5];
+                u.temp_array[1] = buf[6];
+                u.temp_array[2] = buf[7];
+                u.temp_array[3] = buf[8];
+                sensors.no2 = u.float_variable;
 
 
-                    case NODEID_MGAS1:
-                    case NODEID_DHT22_1:
-                    case NODEID_DHT22_2:
-                    
-                        /*
-                        memcpy(&sensor_data.id1, &buf[0], sizeof(buf[0]));
-                        memcpy(&sensor_data.length1, &buf[1], sizeof(buf[1]));
-                        //memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(int16_t));
-
-                        u16_union.temp_array[0] = buf[2];
-                        u16_union.temp_array[1] = buf[3];
-
-                        memcpy(&sensor_data.value_temperature1, &u16_union.u16_var, sizeof(int16_t)); 
-                        ///
-
-                        u16_union.temp_array[0] = buf[4];
-                        u16_union.temp_array[1] = buf[5];
-
-                        memcpy(&sensor_data.value_humidity1, &u16_union.u16_var, sizeof(int16_t)); 
-
-                        //memcpy(&sensor_data.value_humidity1, &buf[4], sizeof(int16_t));
-                    
-                        memcpy(&sensor_data.id2, &buf[6], sizeof(buf[6]));
-                        memcpy(&sensor_data.length2, &buf[7], sizeof(buf[7]));
-
-                        u16_union.temp_array[0] = buf[8];
-                        u16_union.temp_array[1] = buf[9];
-
-                        memcpy(&sensor_data.value_temperature2, &u16_union.u16_var, sizeof(int16_t));
-                        //memcpy(&sensor_data.value_temperature2, &buf[8], sizeof(int16_t));
-                        
-                        u16_union.temp_array[0] = buf[10];
-                        u16_union.temp_array[1] = buf[11];
-                        memcpy(&sensor_data.value_humidity2, &u16_union.u16_var, sizeof(int16_t));
-                        */
-
-                       
-                        //memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(int16_t));
-
-                     /*   printf("ID1: %d\n", sensor_data.id1);                                                                                 DEPRECATED
-                        printf("Length1: %d\n", sensor_data.length1);
-                        printf("Value_temperature1: %02d.%02d\n", (sensor_data.value_temperature1)/10, (sensor_data.value_temperature1)%10);
-                        printf("Value_humidity1: %02d.%02d\n", (sensor_data.value_humidity1)/10, (sensor_data.value_humidity1)%10);
-                        
-                        printf("ID2: %d\n", sensor_data.id2);
-                        printf("Length2: %d\n", sensor_data.length2);
-                        printf("Value_temperature2: %02d.%02d\n", (sensor_data.value_temperature2)/10, (sensor_data.value_temperature2)%10);
-                        printf("Value_humidity2: %02d.%02d\n", (sensor_data.value_humidity2)/10, (sensor_data.value_humidity2)%10);
-                    */
-                        break;
-                        
-                    case NODEID_O3_1:
-                    case NODEID_O3_2:
-                        
-                        u16_union.temp_array[0] = buf[1];
-                        u16_union.temp_array[1] = buf[2];
-                        
-                        memcpy(&sensors.temperature, &u16_union.u16_var, sizeof(int16_t)); 
-                    
-
-                        u16_union.temp_array[0] = buf[3];
-                        u16_union.temp_array[1] = buf[4];
-                        memcpy(&sensors.humidity, &u16_union.u16_var, sizeof(int16_t));
-
-                        u.temp_array[0] = buf[5];
-                        u.temp_array[1] = buf[6];
-                        u.temp_array[2] = buf[7];
-                        u.temp_array[3] = buf[8];
-                        
-                    
-                        memcpy(&sensors.o3, &u.float_variable, sizeof(float));
-                        fbuf = sensors.o3 * 100;
-                        
+                printf("{\"nodeID\": %d", buf[0] & 0b00011111);
+                printf(",\"co\": ");
+                fbuf = sensors.co * 100;
+                printf("%lu.%02lu", fbuf/100, fbuf%100);
+                printf(", \"no2\": ");
+                fbuf = sensors.no2 * 100;
+                printf("%lu.%02lu", fbuf/100, fbuf%100);
+                printf("}\n");    
+                break;
 
 
-                        printf("{\"nodeID\": %d", buf[0]&0b00011111);
-                        printf(",\"ppm\": ");
-                        printf("%lu.%02lu", fbuf/100, fbuf%100);
-                    
-                        printf(",\"Humidity\": %d.%d", sensors.humidity/10, sensors.humidity%10);
-                        printf(",\"Temperature\": %d.%d", sensors.temperature/10, sensors.temperature%10);
-                        printf("}\n");
-                        break;
-                    case NODEID_PM10_1:
-                    case NODEID_PM10_2:
-                    
-                        sensors.pm10 = (buf[2] << 8) | buf[1];
-                        printf("{\"nodeID\": %d", buf[0]&0b00011111);
-                        printf(",\"pm10\": %d", sensors.pm10);
-                        printf("}\n");
-                        break;
-                        //AOK!!
-                    
-                    default:
-                        /*printf("unknown nodeID %d\n", buf[0]);
-                        printf("BYTES copied are: ");
-                        for (int i = 0; i < len; i++) {
-                        printf("%d ", buf[i]);
-                        */        
-                        break;
-                    } //switch
+            case NODEID_MGAS1:
+            case NODEID_DHT22_1:
+            case NODEID_DHT22_2:
+            
+                /*
+                memcpy(&sensor_data.id1, &buf[0], sizeof(buf[0]));
+                memcpy(&sensor_data.length1, &buf[1], sizeof(buf[1]));
+                //memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(int16_t));
+
+                u16_union.temp_array[0] = buf[2];
+                u16_union.temp_array[1] = buf[3];
+
+                memcpy(&sensor_data.value_temperature1, &u16_union.u16_var, sizeof(int16_t)); 
+                ///
+
+                u16_union.temp_array[0] = buf[4];
+                u16_union.temp_array[1] = buf[5];
+
+                memcpy(&sensor_data.value_humidity1, &u16_union.u16_var, sizeof(int16_t)); 
+
+                //memcpy(&sensor_data.value_humidity1, &buf[4], sizeof(int16_t));
+            
+                memcpy(&sensor_data.id2, &buf[6], sizeof(buf[6]));
+                memcpy(&sensor_data.length2, &buf[7], sizeof(buf[7]));
+
+                u16_union.temp_array[0] = buf[8];
+                u16_union.temp_array[1] = buf[9];
+
+                memcpy(&sensor_data.value_temperature2, &u16_union.u16_var, sizeof(int16_t));
+                //memcpy(&sensor_data.value_temperature2, &buf[8], sizeof(int16_t));
+                
+                u16_union.temp_array[0] = buf[10];
+                u16_union.temp_array[1] = buf[11];
+                memcpy(&sensor_data.value_humidity2, &u16_union.u16_var, sizeof(int16_t));
+                */
+
+                
+                //memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(int16_t));
+
+                /*   printf("ID1: %d\n", sensor_data.id1);                                                                                 DEPRECATED
+                printf("Length1: %d\n", sensor_data.length1);
+                printf("Value_temperature1: %02d.%02d\n", (sensor_data.value_temperature1)/10, (sensor_data.value_temperature1)%10);
+                printf("Value_humidity1: %02d.%02d\n", (sensor_data.value_humidity1)/10, (sensor_data.value_humidity1)%10);
+                
+                printf("ID2: %d\n", sensor_data.id2);
+                printf("Length2: %d\n", sensor_data.length2);
+                printf("Value_temperature2: %02d.%02d\n", (sensor_data.value_temperature2)/10, (sensor_data.value_temperature2)%10);
+                printf("Value_humidity2: %02d.%02d\n", (sensor_data.value_humidity2)/10, (sensor_data.value_humidity2)%10);
+            */
+                break;
+                
+            case NODEID_O3_1:
+            case NODEID_O3_2:
+                
+                u16_union.temp_array[0] = buf[1];
+                u16_union.temp_array[1] = buf[2];
+                
+                memcpy(&sensors.temperature, &u16_union.u16_var, sizeof(int16_t)); 
+            
+
+                u16_union.temp_array[0] = buf[3];
+                u16_union.temp_array[1] = buf[4];
+                memcpy(&sensors.humidity, &u16_union.u16_var, sizeof(int16_t));
+
+                u.temp_array[0] = buf[5];
+                u.temp_array[1] = buf[6];
+                u.temp_array[2] = buf[7];
+                u.temp_array[3] = buf[8];
+                
+            
+                memcpy(&sensors.o3, &u.float_variable, sizeof(float));
+                fbuf = sensors.o3 * 100;
+                
+
+
+                printf("{\"nodeID\": %d", buf[0]&0b00011111);
+                printf(",\"ppm\": ");
+                printf("%lu.%02lu", fbuf/100, fbuf%100);
+            
+                printf(",\"Humidity\": %d.%d", sensors.humidity/10, sensors.humidity%10);
+                printf(",\"Temperature\": %d.%d", sensors.temperature/10, sensors.temperature%10);
+                printf("}\n");
+                break;
+            case NODEID_PM10_1:
+            case NODEID_PM10_2:
+            
+                sensors.pm10 = (buf[2] << 8) | buf[1];
+                printf("{\"nodeID\": %d", buf[0]&0b00011111);
+                printf(",\"pm10\": %d", sensors.pm10);
+                printf("}\n");
+                break;
+                //AOK!!
+            
+            default:
+                /*printf("unknown nodeID %d\n", buf[0]);
+                printf("BYTES copied are: ");
+                for (int i = 0; i < len; i++) {
+                printf("%d ", buf[i]);
+                */        
+                break;
+            } //switch
 
         }
         else if( frame ==5){
