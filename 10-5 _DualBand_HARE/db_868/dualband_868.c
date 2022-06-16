@@ -277,7 +277,7 @@ PROCESS_THREAD(dualband_868, ev, data){
   nodeid_db = get_nodeid(NODEID_DB);
   kids = get_childs_ID(nodeid_db, kids);
   printf("Nodeid: %d\n", nodeid_db);
-  printf("Childs: %d %d\n", kids.nodeid1, kids.nodeid2);
+  printf("Childs: %d %d\n", get_nodeid(kids.nodeid1), get_nodeid(kids.nodeid2));
   uart_set_input(1, print_uart);
   while(1){
         
