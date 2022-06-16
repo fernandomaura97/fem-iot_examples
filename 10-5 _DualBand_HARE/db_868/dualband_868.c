@@ -26,7 +26,7 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID NODEID1
+#define NODEID_DB NODEID2
 
 
 #define T_MDB  (10 * CLOCK_SECOND)
@@ -37,6 +37,85 @@
 #define LOG_MODULE "DB_868"
 #define LOG_LEVEL LOG_LEVEL_DBG
 
+struct childs_polled_t {
+    uint8_t nodeid1;
+    uint8_t nodeid2;
+};
+typedef struct childs_polled_t childs_polled;
+
+
+uint8_t is_polled(uint8_t bitmask, uint8_t id)  //prints which nodes the beacon is polling, and if it's own NODEID return position of poll
+{
+    uint8_t masked = bitmask & id;
+    if (masked & id){
+        return 1;
+    }
+    else{
+        return 0; 
+    }         
+}
+//function to print the number of the NODEID (f.e. NODEID8 would return 8)
+uint8_t get_nodeid(uint8_t id)
+{
+    uint8_t i;
+    for (i = 0; i < 8; i++)
+    {
+        if (id & (1 << i))
+        {
+            return (i+1);
+        }
+    }
+    return 0;
+}
+
+childs_polled get_childs_ID(uint8_t nodeid_t, childs_polled childs)
+{
+    
+    //printf("nodeid_t: %d\n", nodeid_t);
+    switch (nodeid_t)
+    {
+        case NODEID1:
+            childs.nodeid1 = NODEID1;
+            childs.nodeid2 = NODEID2;
+            break;
+        case NODEID2:
+            childs.nodeid1 = NODEID3;
+            childs.nodeid2 = NODEID4;
+            break;
+        case NODEID3:
+            childs.nodeid1 = NODEID5;
+            childs.nodeid2 = NODEID6;
+            break;
+        case NODEID4:
+            childs.nodeid1 = NODEID7;
+            childs.nodeid2 = NODEID8;
+            break;
+        default:
+            break;  
+    }
+    return childs;
+}
+
+childs_polled are_childs_polled( childs_polled childs, uint8_t bitmask_in)
+{
+    uint8_t masked1 = bitmask_in & childs.nodeid1;
+    uint8_t masked2 = bitmask_in & childs.nodeid2;
+    
+    if(masked1 & childs.nodeid1) {
+            childs.nodeid1 = 1;
+        }
+    else{
+            childs.nodeid1 = 0;
+        }
+    
+    if (masked2 & childs.nodeid2) {
+            childs.nodeid2 = 1;
+        }
+    else{
+            childs.nodeid2 = 0;
+        }
+    return childs;
+}
 
 #pragma pack(push,1) //REMOVE PADDING
 typedef struct hare_stats_t{
@@ -69,7 +148,8 @@ static uint8_t global_ag_buf[sizeof(buffer_aggregation)];
 const char delimitador[3] = " ";
 long int sortida[3];
 char* endPtr;
-static uint8_t nodeid;
+static uint8_t nodeid_db;
+static childs_polled kids; //struct to store the childs of the node
 volatile static uint8_t bitmask; 
 
 static clock_time_t time_of_beacon_rx; // time of beacon reception
@@ -89,30 +169,7 @@ static linkaddr_t from, gw_addr;
 
 //static bool flag = 0;  
 
-uint8_t am_i_polled(uint8_t bitmask, uint8_t id)  //prints which nodes the beacon is polling, and if it's own NODEID return position of poll
-{
-    uint8_t masked = bitmask & id;
-    if (masked & id){
-        return 1;
-    }
-    else{
-        return 0; 
-    }         
-}
 //function to print the number of the NODEID (f.e. NODEID8 would return 8)
-uint8_t get_nodeid(uint8_t id)
-{
-    uint8_t i;
-    for (i = 0; i < 8; i++)
-    {
-        if (id & (1 << i))
-        {
-            return (i+1);
-        }
-    }
-    return 0;
-}
-
 
 
 /*---------------------------------------------------------------------------*/
@@ -217,8 +274,10 @@ PROCESS_THREAD(dualband_868, ev, data){
  
   PROCESS_BEGIN();
   nullnet_set_input_callback(input_callback);
-  nodeid = get_nodeid(NODEID);
-  printf("Nodeid: %d\n", nodeid);
+  nodeid_db = get_nodeid(NODEID_DB);
+  kids = get_childs_ID(nodeid_db, kids);
+  printf("Nodeid: %d\n", nodeid_db);
+  printf("Childs: %d %d\n", kids.nodeid1, kids.nodeid2);
   uart_set_input(1, print_uart);
   while(1){
         
@@ -383,7 +442,7 @@ PROCESS_THREAD(associator_process, ev, data){
     
     time_of_beacon_rx = RTIMER_NOW();
 
-    time_to_wait = (T_MDB  + ((nodeid -1) * (T_SLOT + T_GUARD)))- T_GUARD;
+    time_to_wait = (T_MDB  + ((nodeid_db -1) * (T_SLOT + T_GUARD)))- T_GUARD;
 
     printf("time to poll is  %lu\n", time_to_wait/CLOCK_SECOND);
     etimer_set(&radiotimer, time_to_wait);
@@ -394,7 +453,7 @@ PROCESS_THREAD(associator_process, ev, data){
       i_pwr= 0;            
          
       buf[0] = 0b00100000; //association request
-      buf[1] = nodeid; 
+      buf[1] = nodeid_db; 
 
       nullnet_buf = (uint8_t *)buf;
       nullnet_len = sizeof(buf);
@@ -438,7 +497,7 @@ PROCESS_THREAD(associator_process, ev, data){
       else //if is associated
         {
             printf("I'm already associated\n");
-            printf("bitmask: %02x, nodeid: %d\n", bitmask, nodeid);
+            printf("bitmask: %02x, nodeid_db: %d\n", bitmask, nodeid_db);
         }
       } //if !is_associated
 
@@ -446,11 +505,13 @@ PROCESS_THREAD(associator_process, ev, data){
       /*----------------------------------------------------------------------------------------*/
       //SECOND PART, WAITING UNTIL POLL TIME
 
-
-      amipolled_f = am_i_polled(bitmask, nodeid);
+      childs_polled children;
+      children = are_childs_polled(kids,bitmask);
+      LOG_DBG("is_polled: child1 %d child2 %d\n", children.nodeid1, children.nodeid2);
+      amipolled_f = children.nodeid1 || children.nodeid2;
 
       if( amipolled_f == 1){
-          printf("I'm transmitting in the %dth slot\n", nodeid);
+          printf("I'm transmitting in the %dth slot\n", nodeid_db);
           
           //time_until_poll = T_MDB + ((NODEID-1) * (T_SLOT + T_GUARD)) - T_GUARD;
           //printf("radio off, time until radio on: %lu ticks, %lu seconds\n", time_until_poll ,time_until_poll/CLOCK_SECOND);              
@@ -506,14 +567,14 @@ PROCESS_THREAD(poll_process,ev,data)
 
   //time_after_poll = RTIMER_NOW();
   
-  if(buffer_poll[1] == nodeid) //if the poll is for me
+  if(buffer_poll[1] == nodeid_db) //if the poll is for me
   {
 
 
 
     if(uart_rx_flag == true){
 
-      global_ag_buf[0] = 0b10000000 | nodeid;
+      global_ag_buf[0] = 0b10000000 | nodeid_db;
       nullnet_buf = (uint8_t *) &global_ag_buf;
       nullnet_len = sizeof(global_ag_buf);
 
