@@ -213,7 +213,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
             leds_toggle(LEDS_BLUE);
             }
         }
-        
+        leds_off(LEDS_BLUE);
         etimer_set(&mm_timer, T_MM); /// T_MDB wait
         
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&mm_timer));

@@ -208,7 +208,6 @@ void input_callback(const void *data, uint16_t len,
 }
 
 void serial_in(){
-    printf("yoyooyoy");
     char delimitador[] = ",";
     char copy_buffer[100]; 
     strcpy(copy_buffer, buf_in);
@@ -275,7 +274,7 @@ PROCESS_THREAD(dualband_868, ev, data){
   PROCESS_BEGIN();
   nullnet_set_input_callback(input_callback);
   nodeid_db = get_nodeid(NODEID_DB);
-  kids = get_childs_ID(nodeid_db, kids);
+  kids = get_childs_ID(NODEID_DB, kids);
   printf("Nodeid: %d\n", nodeid_db);
   printf("Childs: %d %d\n", get_nodeid(kids.nodeid1), get_nodeid(kids.nodeid2));
   uart_set_input(1, print_uart);
@@ -412,7 +411,7 @@ while(1){
   else{
     LOG_DBG("unknown frame header\n");
   }
-
+  
 }
 PROCESS_END();
 
@@ -505,7 +504,8 @@ PROCESS_THREAD(associator_process, ev, data){
       /*----------------------------------------------------------------------------------------*/
       //SECOND PART, WAITING UNTIL POLL TIME
 
-      childs_polled children;
+      static childs_polled children;
+      
       children = are_childs_polled(kids,bitmask);
       LOG_DBG("is_polled: child1 %d child2 %d\n", children.nodeid1, children.nodeid2);
       amipolled_f = children.nodeid1 || children.nodeid2;
