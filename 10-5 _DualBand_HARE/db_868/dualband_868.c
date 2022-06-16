@@ -310,13 +310,13 @@ while(1){
 
 
   uint8_t frame_header = (datapoint[0] & 0b11100000) >> 5; 
-  bitmask = datapoint[1];
+  
   
   if(frame_header == 0){
     //printf("beacon\n");
     
     linkaddr_copy(&gw_addr, &from);
-
+    bitmask = datapoint[1];
                 
     uint8_t Beacon_no = datapoint[0] & 0b00011111;
 
