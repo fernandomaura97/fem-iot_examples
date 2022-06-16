@@ -103,7 +103,7 @@ static linkaddr_t from;
 
 
 static char *rxdata;
-static volatile uint8_t bitmask;
+static uint8_t bitmask;
 
 static uint16_t lost_message_counter = 0;
 static bool poll_response_received = 0; 
@@ -184,7 +184,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
     nullnet_set_input_callback(input_callback);
 
     //setup time
-    etimer_set(&periodic_timer, 5*CLOCK_SECOND);
+    etimer_set(&periodic_timer, 12*CLOCK_SECOND);
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
     while(1)
@@ -198,9 +198,8 @@ PROCESS_THREAD(coordinator_process, ev,data)
         static uint8_t i;
 
         for (i= 0; i<3; i++) 
-        {
+        {   leds_toggle(LEDS_BLUE);
             beaconbuf[1] = bitmask; 
-           
             beaconbuf[0] = i; 
             nullnet_buf = (uint8_t*)&beaconbuf;
             nullnet_len = sizeof(beaconbuf);
@@ -211,6 +210,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
             if(i<2){
             etimer_set(&guard_timer, T_GUARD); //set the timer for the next interval
             PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&guard_timer));
+            leds_toggle(LEDS_BLUE);
             }
         }
         
@@ -617,7 +617,7 @@ PROCESS_THREAD(serial_process, ev, data)
 
             LOG_DBG("bitmask value (serial): %d\n", buf_bitmask);
             //bitmask = buf_bitmask; //store received bitmask for next cycle
-            memcpy(&bitmask, &buf_bitmask, sizeof(uint8_t));s
+            memcpy(&bitmask, &buf_bitmask, sizeof(uint8_t));
 
         }   
         else{
