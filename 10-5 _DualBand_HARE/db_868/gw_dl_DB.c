@@ -298,124 +298,120 @@ PROCESS_THREAD(coordinator_process, ev,data)
         for(i = 1; i<9; i++)
         {
             if(bitmask & 0x01){
-            bitmask = bitmask >> 1;
+                bitmask = bitmask >> 1;
                 
-            switch(i){
+                switch(i){
 
-                case 1: 
-                case 2: 
-                    if(flags.nodeDB1 == 0){
+                    case 1: 
+                    case 2: 
+                        if(flags.nodeDB1 == 0){
 
-                        current_pollDB = 1;
-                        flags.nodeDB1 = 1;
-                        LOG_INFO("polling node DB1\n");
-                        pollbuf[0] = 0b01100000; //poll is 3
-                        pollbuf[1] = 1;
-                        nullnet_buf = (uint8_t*)&pollbuf;
-                        nullnet_len = sizeof(pollbuf);
-                        NETSTACK_NETWORK.output(NULL); 
-                    
-                    }
-                    else{
-                        LOG_DBG("node DB1 already polled\n");
-                    }
-                    break;
-
-                case 3: 
-                case 4:
-                    current_pollDB = 2;
-                    if(flags.nodeDB2 == 0){
-                        flags.nodeDB2 = 1;
-                        LOG_INFO("polling node DB2\n");
-
-                        pollbuf[0] = 0b01100000; //poll is 3
-                        pollbuf[1] = 2;
-                        nullnet_buf = (uint8_t*)&pollbuf;
-                        nullnet_len = sizeof(pollbuf);
-                        NETSTACK_NETWORK.output(NULL); 
-                    }
-                    else{
-                        LOG_DBG("node DB2 already polled\n");
-                    }
-                    break; 
-                case 5:
-                case 6:
-                    current_pollDB = 3;
-                    if(flags.nodeDB3 == 0){
-                        flags.nodeDB3 = 1;
-                        LOG_INFO("polling node DB3\n");
-                        pollbuf[0] = 0b01100000; //poll is 3
-                        pollbuf[1] = 3;
-                        nullnet_buf = (uint8_t*)&pollbuf;
-                        nullnet_len = sizeof(pollbuf);
-                        NETSTACK_NETWORK.output(NULL); 
-                    }   
-                    else{
-                        LOG_DBG("node DB3 already polled\n");
-                    }
-                    break;
-
-                case 7:
-                case 8:
-                    current_pollDB = 4;
-                    if(flags.nodeDB4 == 0){
-                        flags.nodeDB4 = 1;
-                        printf("polling node DB4\n");
+                            current_pollDB = 1;
+                            flags.nodeDB1 = 1;
+                            LOG_INFO("polling node DB1\n");
+                            pollbuf[0] = 0b01100000; //poll is 3
+                            pollbuf[1] = 1;
+                            nullnet_buf = (uint8_t*)&pollbuf;
+                            nullnet_len = sizeof(pollbuf);
+                            NETSTACK_NETWORK.output(NULL); 
                         
-                        pollbuf[0] = 0b01100000; //poll is 3
-                        pollbuf[1] = 4;
-                        nullnet_buf = (uint8_t*)&pollbuf;
-                        nullnet_len = sizeof(pollbuf);
+                        }
+                        else{
+                            LOG_DBG("node DB1 already polled\n");
+                        }
+                        break;
+
+                    case 3: 
+                    case 4:
+                        current_pollDB = 2;
+                        if(flags.nodeDB2 == 0){
+                            flags.nodeDB2 = 1;
+                            LOG_INFO("polling node DB2\n");
+
+                            pollbuf[0] = 0b01100000; //poll is 3
+                            pollbuf[1] = 2;
+                            nullnet_buf = (uint8_t*)&pollbuf;
+                            nullnet_len = sizeof(pollbuf);
+                            NETSTACK_NETWORK.output(NULL); 
+                        }
+                        else{
+                            LOG_DBG("node DB2 already polled\n");
+                        }
+                        break; 
+                    case 5:
+                    case 6:
+                        current_pollDB = 3;
+                        if(flags.nodeDB3 == 0){
+                            flags.nodeDB3 = 1;
+                            LOG_INFO("polling node DB3\n");
+                            pollbuf[0] = 0b01100000; //poll is 3
+                            pollbuf[1] = 3;
+                            nullnet_buf = (uint8_t*)&pollbuf;
+                            nullnet_len = sizeof(pollbuf);
+                            NETSTACK_NETWORK.output(NULL); 
+                        }   
+                        else{
+                            LOG_DBG("node DB3 already polled\n");
+                        }
+                        break;
+
+                    case 7:
+                    case 8:
+                        current_pollDB = 4;
+                        if(flags.nodeDB4 == 0){
+                            flags.nodeDB4 = 1;
+                            printf("polling node DB4\n");
+                            
+                            pollbuf[0] = 0b01100000; //poll is 3
+                            pollbuf[1] = 4;
+                            nullnet_buf = (uint8_t*)&pollbuf;
+                            nullnet_len = sizeof(pollbuf);
+                            NETSTACK_NETWORK.output(NULL); 
+                        }
+                        else{
+                            printf("node DB4 already polled\n");
+                        }
+                        break;
+                }                                
+                
+                if(i ==2 || i ==4 || i ==6 || i ==8){
+
+                    etimer_set(&periodic_timer, T_SLOT); //set the timer for the next interval
+                    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+                    
+                    if(!poll_response_received){
+                        
+                        LOG_DBG("polling node %d, no response!! TRYING AGAIN \n", current_pollDB);
+                        
                         NETSTACK_NETWORK.output(NULL); 
                     }
-                    else{
-                        printf("node DB4 already polled\n");
-                    }
-                    break;
-            }                                
+
+                    etimer_set(&periodic_timer, T_GUARD);
+                    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+
+                    if(!poll_response_received){ //we can receive a response by this time
+
+                        if(i<5){ //if we are polling the first 4 child nodes, account for error
+
+                            childs_polled nins_polled = get_childs_ID_m(current_pollDB, nins_polled);
+                            LOG_INFO("no response\n");
+                            printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": 0, \"H1\": 0, \"Pw_tx1\": 0,\"n_beacons1\": 0, \"n_transmissions1\": 0, \"permil_radio_on1\": 0,\"permil_tx1\": 0, \"permil_rx1\": 0, \"T2\": 0, \"H2\": 0, \"Pw_tx2\": 0, \"n_beacons2\": 0,  \"n_transmissions2\": 0, \"permil_radio_on2\": 0, \"permil_tx2\": 0, \"permil_rx2\": 0}\n" ,current_pollDB, nins_polled.nodeid1, nins_polled.nodeid2); 
+                            lost_message_counter ++;
+                        }
+                        else{
+                            LOG_INFO("no response(EXPECTED) \n");
+                        }
                 
-                etimer_set(&periodic_timer, T_SLOT); //set the timer for the next interval
-                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-                
-                if(!poll_response_received){
-                    
-                    LOG_DBG("polling node %d, no response!! TRYING AGAIN \n", current_pollDB);
-                    
-                    NETSTACK_NETWORK.output(NULL);; 
-                }
-
-                etimer_set(&periodic_timer, T_GUARD);
-                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-
-                if(!poll_response_received){
-
-                    if(i<5){ //if we are in the first 3 nodes, account for error ( ONLY FOR TEST WITH 3 NODES)
-
-
-                        childs_polled nins_polled = get_childs_ID_m(current_pollDB, nins_polled);
-                        LOG_INFO("no response\n");
-                        printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": 0, \"H1\": 0, \"Pw_tx1\": 0,\"n_beacons1\": 0, \"n_transmissions1\": 0, \"permil_radio_on1\": 0,\"permil_tx1\": 0, \"permil_rx1\": 0, \"T2\": 0, \"H2\": 0, \"Pw_tx2\": 0, \"n_beacons2\": 0,  \"n_transmissions2\": 0, \"permil_radio_on2\": 0, \"permil_tx2\": 0, \"permil_rx2\": 0}\n" ,current_pollDB, nins_polled.nodeid1, nins_polled.nodeid2); 
-                        lost_message_counter ++;
                     }
-                    else{
-                        LOG_INFO("no response(EXPECTED) \n");
-                    }
-                   
-                }
-                poll_response_received = 0;
-
-
+                    poll_response_received = 0;
+                }             
            }
               else{
                 bitmask = bitmask >> 1;
                 dt = clock_time() - t;
                 LOG_INFO("NOT polling node %d, dt: %lu\n", current_pollDB, dt/CLOCK_SECOND);
-                etimer_set(&periodic_timer, T_SLOT); //set the timer for the next interval
+                etimer_set(&periodic_timer, T_SLOT+T_GUARD); //set the timer for the next interval
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-                
-                etimer_set(&periodic_timer, T_GUARD);
-                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-                
               }
         }
         memset(&flags, 0, sizeof(flags));
@@ -433,9 +429,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
     PROCESS_END();
 
 }
-
 /*-----------------------------------------------------------------------------------------*/
-
 
 PROCESS_THREAD(association_process,ev,data){
 
@@ -527,7 +521,7 @@ PROCESS_THREAD(callback_process,ev,data){
         //buf = (uint8_t*)malloc(cb_len);
         buf = packetbuf_dataptr(); //THIS NEEDS TO BE TESTED
 
-        LOG_DBG("buf %d %d %d\n", buf[0], buf[1], buf[2]);
+        //LOG_DBG("buf %d %d %d\n", buf[0], buf[1], buf[2]);
         frame = (buf[0] & 0b11100000)>>5;
         uint8_t frame2 = (buf[0] & 0b00011111);
         
@@ -560,6 +554,7 @@ PROCESS_THREAD(callback_process,ev,data){
                 kids_polled = get_childs_ID(nodeid_DB, kids_polled);
 
 
+            /*  
                 LOG_DBG("RAW DATA!!: ");
                 #if LOG_LEVEL == LOG_LEVEL_DBG
                
@@ -568,7 +563,7 @@ PROCESS_THREAD(callback_process,ev,data){
                 }
                 printf("\n");
                 #endif
-            
+            */
                 
                 //JSON parser: 
                 printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2, get_nodeid(kids_polled.nodeid1), get_nodeid(kids_polled.nodeid2),ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
