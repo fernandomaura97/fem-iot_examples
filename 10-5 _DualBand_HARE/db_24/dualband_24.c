@@ -183,9 +183,7 @@ int print_uart(unsigned char c){
 void input_callback(const void *data, uint16_t len,
   const linkaddr_t *src, const linkaddr_t *dest){
 
-    uint8_t * dbgbuf = malloc(len);
-
-
+    
     //memcpy(dbgbuf, data, len);
     //LOG_DBG("Received %u bytes: %d %d %d %d %d\n", len, dbgbuf[0], dbgbuf[1], dbgbuf[2], dbgbuf[3], dbgbuf[4]);  
     
@@ -193,7 +191,6 @@ void input_callback(const void *data, uint16_t len,
     cb_len = len; //save the length of the received packet
     //packetbuf_copyto(&global_buffer); //copy the received packet to the buffer
 
-    free(dbgbuf);
     process_poll(&radio_receiver);
 
 
@@ -224,6 +221,12 @@ PROCESS_THREAD(dualband_24, ev, data){
     printf("%s", sprinter);
 
     uart1_send_bytes((unsigned char *)sprinter, strlen(sprinter));
+
+    //clear both the buffer and hare_stats
+    memset(buffer_aggregation, 0, sizeof(buffer_aggregation));
+    memset(hare_stats, 0, sizeof(hare_stats));
+    memset(aggregation_msg, 0, sizeof(aggregation_msg));
+
 
     /*------------------------------------------------------
     Here send the aggregated buffer to the db_868 through UART
