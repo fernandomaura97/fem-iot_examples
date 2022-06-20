@@ -261,9 +261,8 @@ int print_uart(unsigned char c){
 void
 ctimer_callback(void *ptr)
 {
-  /* rearm the ctimer */
-  bcon_flag = 0;
-  NETSTACK_RADIO.on();
+   bcon_flag = 0;
+  //NETSTACK_RADIO.on();
   
   LOG_DBG("CTimer callback called, turning radio ON\n");
 }
@@ -513,10 +512,9 @@ PROCESS_THREAD(associator_process, ev, data){
       if( amipolled_f == 1){
           printf("I'm transmitting in the %dth slot\n", nodeid_db);
           
-          //time_until_poll = T_MDB + ((NODEID-1) * (T_SLOT + T_GUARD)) - T_GUARD;
-          //printf("radio off, time until radio on: %lu ticks, %lu seconds\n", time_until_poll ,time_until_poll/CLOCK_SECOND);              
-          NETSTACK_RADIO.off();
-          RTIMER_BUSYWAIT(5);
+          
+          //NETSTACK_RADIO.off();
+          
           //etimer_set( &radiotimer, time_until_poll);
           PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&radiotimer));
           
@@ -525,12 +523,11 @@ PROCESS_THREAD(associator_process, ev, data){
       }
       else if (amipolled_f == 0) { //if not polled, just wait for the next beacon
           printf("Radio off until the next beacon\n");
-          NETSTACK_RADIO.off();
-          RTIMER_BUSYWAIT(5);
+          //NETSTACK_RADIO.off();
           etimer_set( &radiotimer, T_BEACON - 2*CLOCK_SECOND);
           PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&radiotimer));
 
-          NETSTACK_RADIO.on();
+          //NETSTACK_RADIO.on();
           printf("radio back on, beacon in ~2s\n");
       }   
       amipolled_f = 0; 
@@ -597,29 +594,9 @@ PROCESS_THREAD(poll_process,ev,data)
     
 
 
-    NETSTACK_RADIO.off();
-    RTIMER_BUSYWAIT(5);
-    LOG_DBG("Radio off\n");
-    
-    /*clock_time_t time_next_beacon = (time_after_poll - time_of_beacon_rx);
-    printf("time_next_beacon: %lu seconds, %lu ticks \n", time_next_beacon/CLOCK_SECOND, time_next_beacon);
-    
-    etimer_set(&next_beacon_etimer, time_next_beacon);
-    */
-    //printf("setting timer for %lu seconds. Time now: %lu, Time of beacon : %lu, dt : %lu\n", T_BEACON - 10*CLOCK_SECOND - time_after_poll/CLOCK_SECOND, RTIMER_NOW()/CLOCK_SECOND, time_of_beacon_rx/CLOCK_SECOND, time_after_poll/CLOCK_SECOND);
-    //etimer_set(&next_beacon_etimer, T_BEACON - 3*CLOCK_SECOND - time_after_poll);
-    //printf("still here\n");
-
-  /*
-    PROCESS_WAIT_UNTIL(etimer_expired(&next_beacon_etimer));
-    NETSTACK_RADIO.on();
-    printf("radio back on, beacon in ~2s!!! \n");
-    
-
-    PROCESS_CONTEXT_BEGIN(&radio_rx_process);
-    bcon_flag = 0;
-    printf("bcon_flag == %d\n", bcon_flag);
-    PROCESS_CONTEXT_END(&radio_rx_process);*/
+    //NETSTACK_RADIO.off();
+    //RTIMER_BUSYWAIT(5);
+    //LOG_DBG("Radio off\n");
   }
   else{
     printf("not my poll, %d\n", buffer_poll[1]);
