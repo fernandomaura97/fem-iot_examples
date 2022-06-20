@@ -410,7 +410,7 @@ while(1){
   else{
     LOG_DBG("unknown frame header\n");
   }
-  
+  free(datapoint);
 }
 PROCESS_END();
 
