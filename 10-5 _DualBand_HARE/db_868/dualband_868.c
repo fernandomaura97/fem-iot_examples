@@ -224,7 +224,7 @@ void serial_in(){
           // printf("token: %s \n", token);
           token = strtok(NULL, delimitador);
           buffer_aggregation[i] = atoi(token);
-          LOG_DBG("buffer_aggregated[%d]: %d\n ", i, buffer_aggregation[i]);
+          //LOG_DBG("buffer_aggregated[%d]: %d\n ", i, buffer_aggregation[i]);
           i++;
           if(i==32){break;}
 
