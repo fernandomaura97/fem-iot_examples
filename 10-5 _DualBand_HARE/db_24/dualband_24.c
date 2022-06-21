@@ -223,9 +223,9 @@ PROCESS_THREAD(dualband_24, ev, data){
     uart1_send_bytes((unsigned char *)sprinter, strlen(sprinter));
 
     //clear both the buffer and hare_stats
-    memset(buffer_aggregation, 0, sizeof(buffer_aggregation));
-    memset(hare_stats, 0, sizeof(hare_stats));
-    memset(aggregation_msg, 0, sizeof(aggregation_msg));
+    memset(&buffer_aggregation, 0, sizeof(buffer_aggregation));
+    memset(&hare_stats, 0, sizeof(hare_stats));
+    memset(&aggregation_msg, 0, sizeof(aggregation_msg));
 
 
     /*------------------------------------------------------
