@@ -592,7 +592,7 @@ PROCESS_THREAD(poll_process, ev,data){
         #else
            if(am_i_polled(bitmask, nodeid) ==1 ){
                 
-                m_and_send_dht22(nodeid);
+                m_and_send_dht22(NODEID);
            }
            else{
 
