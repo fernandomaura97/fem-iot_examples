@@ -18,27 +18,7 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_DBG
 
-#define DEBUG 1
 #define COOJA 0
-
-#if DEBUG
-
-#define PRINTF(...) printf(__VA_ARGS__)
-
-#else //
-
-#define PRINTF(...)
-
-#endif //
-    
-
-/*
-#define f_BEACON 0x00
-#define f_POLL 0x01
-#define f_DATA 0x02
-#define f_ENERGEST 0x03
-*/
-
 
 #define NODEID1 1  // non-adaptive, test
 #define NODEID2 2 //DHT22
@@ -328,6 +308,7 @@ void input_callback(const void *data, uint16_t len,
 PROCESS_THREAD(rx_process,ev,data)
 {   
     static struct etimer Beacon_no_timer;
+    static struct etimer jitter;
     volatile static uint8_t* datapoint; //pointer to the packetbuf
     //static uint8_t buf[10];
     PROCESS_BEGIN();
@@ -415,6 +396,9 @@ PROCESS_THREAD(rx_process,ev,data)
                 PROCESS_CONTEXT_BEGIN(&associator_process);
                 is_associated = true; 
                 PROCESS_CONTEXT_END(&associator_process);
+                //add some jitter, randomize the time
+                etimer_set(&jitter, CLOCK_SECOND + random_rand() % (CLOCK_SECOND/2));
+                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&jitter));
 
                 process_poll(&poll_process); //only happens first time, not associated
             }
@@ -444,7 +428,7 @@ PROCESS_THREAD(rx_process,ev,data)
 
         else{
             LOG_INFO("Unknown packet received\n");
-        } //switch
+        } 
     } //while
     PROCESS_END();
     
@@ -457,18 +441,11 @@ PROCESS_THREAD(associator_process, ev,data){
     //static uint8_t nodeid_no;
     static uint8_t buf[2];
     PROCESS_BEGIN();
-    //nullnet_set_input_callback(input_callback);
     while(1){
 
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL); //wait until beacon 
     
         time_of_beacon_rx = clock_time();
-       
-
-        //time_until_poll = (T_MDB + ((nodeid - 1) * (T_SLOT + T_GUARD))) - T_GUARD;
-        //LOG_DBG("time until poll is %lu\n", time_until_poll/CLOCK_SECOND);
-
-        //etimer_set(&radiotimer, time_until_poll);
         
         if(!is_associated)
         {   
@@ -513,46 +490,6 @@ PROCESS_THREAD(associator_process, ev,data){
         }
 
 
-
-
-
-
-        /*---------------------------------------------------------------------------*/
-        //NO NEED TO WAIT UNTIL POLL TIME
-        /*---------------------------------------------------------------------------*/
-        
-        /*amipolled_f = am_i_polled(bitmask, nodeid);
-
-        if( amipolled_f == 1){
-            printf("I'm transmitting in the %dth slot\n", nodeid);
-            
-            //time_until_poll = T_MDB + ((NODEID-1) * (T_SLOT + T_GUARD)) - T_GUARD;
-            //printf("radio off, time until radio on: %lu ticks, %lu seconds\n", time_until_poll ,time_until_poll/CLOCK_SECOND);              
-            NETSTACK_RADIO.off();
-            RTIMER_BUSYWAIT(5);
-            //etimer_set( &radiotimer, time_until_poll);
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&radiotimer));
-            
-            NETSTACK_RADIO.on();
-            printf("radio back on\n");
-
-
-        }
-        else if (amipolled_f == 0) { //if not polled, just wait for the next beacon
-            printf("Radio off until the next beacon\n");
-            NETSTACK_RADIO.off();
-            RTIMER_BUSYWAIT(5);
-            etimer_set( &radiotimer, T_BEACON - 2*CLOCK_SECOND);
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&radiotimer));
-
-            NETSTACK_RADIO.on();
-
-            printf("radio back on, beacon in ~2s\n");
-        }   
-        amipolled_f = 0; 
-        beaconrx_f= 0 ; 
-        */
-        //CODE STARTS HERE
     }
 
     PROCESS_END();
@@ -561,25 +498,7 @@ PROCESS_THREAD(associator_process, ev,data){
 
 PROCESS_THREAD(poll_process, ev,data){
 
-    /*static struct mydatas {
-        uint8_t NodeID;
-        int16_t temperature;
-        int16_t hum;
-        float co ;
-        float no2 ;
-        float o3 ;
-        uint32_t noise ; 
-        uint16_t pm10;
 
-    } mydata;
-    mydata.co = 1.23;
-    mydata.no2 = 2.34;
-    mydata.o3 = 3.45;
-    mydata.noise = 4560;
-    mydata.pm10 = 45;
-    mydata.hum = 560;
-    mydata.temperature = 670;
-    */
     static clock_time_t time_after_poll;
 
     PROCESS_BEGIN();
@@ -590,7 +509,7 @@ PROCESS_THREAD(poll_process, ev,data){
         #if COOJA
             datasender(nodeid);
         #else
-          if(am_i_polled(bitmask, NODEID) ==1 ){
+           if(am_i_polled(bitmask, NODEID) ==1 ){
                 
                 m_and_send_dht22(nodeid);
            }
@@ -599,35 +518,23 @@ PROCESS_THREAD(poll_process, ev,data){
                 printf("I'm not polled, waiting for the next beacon\n");
            }
         #endif
-
-
-        printf("finished sending\n");
+        //printf("finished sending\n");
         NETSTACK_RADIO.off();
-        RTIMER_BUSYWAIT(5);
-        
+                
         
         time_after_poll = clock_time() - time_of_beacon_rx;
-        printf("setting timer for %lu seconds. Time now: %lu, Time of beacon : %lu, dt : %lu\n", T_BEACON - 10*CLOCK_SECOND - time_after_poll/CLOCK_SECOND, clock_time()/CLOCK_SECOND, time_of_beacon_rx/CLOCK_SECOND, time_after_poll/CLOCK_SECOND); // BROKEN: FIXME
+        LOG_DBG("setting timer for %lu seconds. Time now: %lu, Time of beacon : %lu, dt : %lu\n", (T_BEACON - 10*CLOCK_SECOND - time_after_poll)/CLOCK_SECOND, clock_time()/CLOCK_SECOND, time_of_beacon_rx/CLOCK_SECOND, time_after_poll/CLOCK_SECOND); // BROKEN: FIXME
         
         etimer_set(&next_beacon_etimer, T_BEACON - 3*CLOCK_SECOND - time_after_poll);
         
         PROCESS_WAIT_UNTIL(etimer_expired(&next_beacon_etimer));
+        
         NETSTACK_RADIO.on();
         
         LOG_DBG("radio back on, beacon in ~2s!!! \n");
         PROCESS_CONTEXT_BEGIN(&rx_process);
         beaconrx_f = 0;
         PROCESS_CONTEXT_END(&rx_process);
-        //TOO MUCH
-
-        /* NETSTACK_RADIO.off();
-        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&next_beacon_etimer));
-        NETSTACK_RADIO.on();
-        printf("radio back on, beacon in ~2s \n");
-        */
-            
-
-  
     }
     PROCESS_END();
 }
