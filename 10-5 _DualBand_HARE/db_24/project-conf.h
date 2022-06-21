@@ -2,7 +2,7 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 /*---------------------------*/
-#define IEEE802154_CONF_DEFAULT_CHANNEL 10
+#define IEEE802154_CONF_DEFAULT_CHANNEL 16
 
 #define ENERGEST_CONF_ON 1
 
