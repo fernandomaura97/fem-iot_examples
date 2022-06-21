@@ -328,6 +328,7 @@ void input_callback(const void *data, uint16_t len,
 PROCESS_THREAD(rx_process,ev,data)
 {   
     static struct etimer Beacon_no_timer;
+    static struct etimer jitter;
     volatile static uint8_t* datapoint; //pointer to the packetbuf
     //static uint8_t buf[10];
     PROCESS_BEGIN();
@@ -415,6 +416,9 @@ PROCESS_THREAD(rx_process,ev,data)
                 PROCESS_CONTEXT_BEGIN(&associator_process);
                 is_associated = true; 
                 PROCESS_CONTEXT_END(&associator_process);
+                //add some jitter, randomize the time
+                etimer_set(&jitter, CLOCK_SECOND + random_rand() % (CLOCK_SECOND/2));
+                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&jitter));
 
                 process_poll(&poll_process); //only happens first time, not associated
             }
@@ -531,7 +535,7 @@ PROCESS_THREAD(associator_process, ev,data){
             NETSTACK_RADIO.off();
             RTIMER_BUSYWAIT(5);
             //etimer_set( &radiotimer, time_until_poll);
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&radiotimer));
+            PROCESS_WAIT_EVENT_ hare_stats.power_tx = power_levels[i_pwr];UNTIL(etimer_expired(&radiotimer));
             
             NETSTACK_RADIO.on();
             printf("radio back on\n");
