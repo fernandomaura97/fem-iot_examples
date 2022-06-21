@@ -590,9 +590,9 @@ PROCESS_THREAD(poll_process, ev,data){
         #if COOJA
             datasender(nodeid);
         #else
-          if(am_i_polled(bitmask, nodeid) ==1 ){
+          if(am_i_polled(bitmask, NODEID) ==1 ){
                 
-                m_and_send_dht22(NODEID);
+                m_and_send_dht22(nodeid);
            }
            else{
 
