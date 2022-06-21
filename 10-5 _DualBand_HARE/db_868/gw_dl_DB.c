@@ -272,7 +272,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
         static uint8_t i;
 
         for (i= 0; i<3; i++) 
-        {   leds_toggle(LEDS_BLUE);
+        {   leds_on(LEDS_BLUE);
             beaconbuf[1] = bitmask; 
             beaconbuf[0] = i; 
             nullnet_buf = (uint8_t*)&beaconbuf;
@@ -280,11 +280,11 @@ PROCESS_THREAD(coordinator_process, ev,data)
             
             NETSTACK_NETWORK.output(NULL);
             LOG_INFO("beacon %d sent, length %d, bitmask %d\n", i,sizeof(beaconbuf), beaconbuf[1]);
-            
+            leds_off(LEDS_BLUE);
             if(i<2){
             etimer_set(&guard_timer, T_GUARD); //set the timer for the next interval
             PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&guard_timer));
-            leds_toggle(LEDS_BLUE);
+            
             }
         }
         leds_off(LEDS_BLUE);
@@ -409,7 +409,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
               else{
                 bitmask = bitmask >> 1;
                 dt = clock_time() - t;
-                LOG_INFO("NOT polling node %d, dt: %lu\n", current_pollDB, dt/CLOCK_SECOND);
+                LOG_INFO("NOT polling child node %d, dt: %lu\n", i, dt/CLOCK_SECOND);
                 etimer_set(&periodic_timer, T_SLOT+T_GUARD); //set the timer for the next interval
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
               }
@@ -567,6 +567,9 @@ PROCESS_THREAD(callback_process,ev,data){
                 
                 //JSON parser: 
                 printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2, get_nodeid(kids_polled.nodeid1), get_nodeid(kids_polled.nodeid2),ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
+                memset(&ag_msg, 0, sizeof(aggregation_msg));
+                memset(&buf , 0, sizeof(aggregation_msg));
+                memset(&global_buffer, 0, sizeof(global_buffer));
                 
             } 
             poll_response_received = 1; //we received a poll response
