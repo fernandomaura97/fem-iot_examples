@@ -305,7 +305,8 @@ while (1){
     
             //memcpy(&ha, &hare_stats, sizeof(hare_stats));
             aggregation_msg.p1 = hare_stats;
-            aggregator_flags.f_m1 = true;              
+            aggregator_flags.f_m1 = true;
+            memset(&hare_stats, 0, sizeof(hare_stats));
             break;
             
           case NODEID2:   //TO BE TESTED!!!!**
@@ -315,35 +316,36 @@ while (1){
             
             aggregation_msg.p2 = hare_stats; 
             aggregator_flags.f_m2 = true;
+            memset(&hare_stats, 0, sizeof(hare_stats));
             break; 
           
           default:
             LOG_DBG("NODEID: %d???\n", bytebuf[0]& 0b00011111); 
             break; 
         }
-         LOG_DBG("Added %d bytes of data from node %d to buffer\n", cb_len, header_rx_msg);
+      LOG_DBG("Added %d bytes of data from node %d to buffer\n", cb_len, header_rx_msg);
     
-        if(aggregator_flags.f_m1 || aggregator_flags.f_m2)
-        {
-          aggregator_flags.f_m1 = false;
-          aggregator_flags.f_m2 = false; 
-          
-          printf("data inside struct 1 is: %d %d %d %d %d %d %d %d %d\n", aggregation_msg.p1.header,  aggregation_msg.p1.temperature,  aggregation_msg.p1.humidity,  aggregation_msg.p1.power_tx  , aggregation_msg.p1.n_beacons_received, aggregation_msg.p1.n_transmissions, aggregation_msg.p1.permil_radio_on, aggregation_msg.p1.permil_tx, aggregation_msg.p1.permil_rx);
-          printf("data inside struct 2 is  %d %d %d %d %d %d %d %d %d\n", aggregation_msg.p2.header,  aggregation_msg.p2.temperature,  aggregation_msg.p2.humidity,  aggregation_msg.p2.power_tx,  aggregation_msg.p2.n_beacons_received, aggregation_msg.p2.n_transmissions, aggregation_msg.p2.permil_radio_on, aggregation_msg.p2.permil_tx, aggregation_msg.p2.permil_rx);
+      if(aggregator_flags.f_m1 || aggregator_flags.f_m2)
+      {
+        aggregator_flags.f_m1 = false;
+        aggregator_flags.f_m2 = false; 
+        
+        printf("data inside struct 1 is: %d %d %d %d %d %d %d %d %d\n", aggregation_msg.p1.header,  aggregation_msg.p1.temperature,  aggregation_msg.p1.humidity,  aggregation_msg.p1.power_tx  , aggregation_msg.p1.n_beacons_received, aggregation_msg.p1.n_transmissions, aggregation_msg.p1.permil_radio_on, aggregation_msg.p1.permil_tx, aggregation_msg.p1.permil_rx);
+        printf("data inside struct 2 is  %d %d %d %d %d %d %d %d %d\n", aggregation_msg.p2.header,  aggregation_msg.p2.temperature,  aggregation_msg.p2.humidity,  aggregation_msg.p2.power_tx,  aggregation_msg.p2.n_beacons_received, aggregation_msg.p2.n_transmissions, aggregation_msg.p2.permil_radio_on, aggregation_msg.p2.permil_tx, aggregation_msg.p2.permil_rx);
 
-          memcpy(&buffer_aggregation[0], &aggregation_msg, sizeof(aggregation_msg));
-        /*
-          printf("Buffer of aggregated message is: ");
-          for (int i = 0; i < sizeof(buffer_aggregation); i++)
-          {
-          printf("%d ", buffer_aggregation[i]);
-          }
-          printf("\n");
-        */
-          
-          process_poll(&dualband_24);
+        memcpy(&buffer_aggregation[0], &aggregation_msg, sizeof(aggregation_msg));
+      /*
+        printf("Buffer of aggregated message is: ");
+        for (int i = 0; i < sizeof(buffer_aggregation); i++)
+        {
+        printf("%d ", buffer_aggregation[i]);
         }
-        break;
+        printf("\n");
+      */
+        
+        process_poll(&dualband_24);
+      }
+      break;
   
     default: 
       LOG_DBG("RX: Unknown\n");
