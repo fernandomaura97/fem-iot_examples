@@ -405,14 +405,26 @@ PROCESS_THREAD(coordinator_process, ev,data)
                     }
                     poll_response_received = 0;
                 }             
-           }
-              else{
+           }            
+            else{
                 bitmask = bitmask >> 1;
                 dt = clock_time() - t;
                 LOG_INFO("NOT polling child node %d, dt: %lu\n", i, dt/CLOCK_SECOND);
                 etimer_set(&periodic_timer, T_SLOT+T_GUARD); //set the timer for the next interval
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-              }
+
+                if( (i==2) & (!poll_response_received)){
+                            
+                            LOG_INFO("no response\n");
+                            printf(" { \"Nodeid_DB\": 1, \"nodeid_ch1\": 1, \"nodeid2_ch2\": 2, \"T1\": 0, \"H1\": 0, \"Pw_tx1\": 0,\"n_beacons1\": 0, \"n_transmissions1\": 0, \"permil_radio_on1\": 0,\"permil_tx1\": 0, \"permil_rx1\": 0, \"T2\": 0, \"H2\": 0, \"Pw_tx2\": 0, \"n_beacons2\": 0,  \"n_transmissions2\": 0, \"permil_radio_on2\": 0, \"permil_tx2\": 0, \"permil_rx2\": 0}\n"); 
+                }
+
+                else if((i==4) & (!poll_response_received)){
+                            
+                            LOG_INFO("no response\n");
+                            printf(" { \"Nodeid_DB\": 2, \"nodeid_ch1\": 3, \"nodeid2_ch2\": 4, \"T1\": 0, \"H1\": 0, \"Pw_tx1\": 0,\"n_beacons1\": 0, \"n_transmissions1\": 0, \"permil_radio_on1\": 0,\"permil_tx1\": 0, \"permil_rx1\": 0, \"T2\": 0, \"H2\": 0, \"Pw_tx2\": 0, \"n_beacons2\": 0,  \"n_transmissions2\": 0, \"permil_radio_on2\": 0, \"permil_tx2\": 0, \"permil_rx2\": 0}\n"); 
+                }
+            }
         }
         memset(&flags, 0, sizeof(flags));
 
