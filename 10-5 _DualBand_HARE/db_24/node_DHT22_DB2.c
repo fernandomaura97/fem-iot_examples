@@ -336,7 +336,7 @@ PROCESS_THREAD(rx_process,ev,data)
         //buf[]
 
         uint8_t frame_header = (datapoint[0] & 0b11100000) >> 5;
-        bitmask = datapoint[1];
+        
         //switch(frame_header ) {
 
         if(frame_header ==0){
@@ -356,6 +356,7 @@ PROCESS_THREAD(rx_process,ev,data)
                 if(Beacon_no == 0)
                 {
                     beaconrx_f = 1;
+                    bitmask = datapoint[1];
                     etimer_set(&Beacon_no_timer, CLOCK_SECOND);
                     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
                     process_poll(&associator_process);
@@ -364,6 +365,7 @@ PROCESS_THREAD(rx_process,ev,data)
                 else if(Beacon_no == 1)
                 {   
                     beaconrx_f = 1;
+                    bitmask = datapoint[1];
                     etimer_set(&Beacon_no_timer, CLOCK_SECOND/2);
                     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
                     process_poll(&associator_process);
@@ -371,7 +373,9 @@ PROCESS_THREAD(rx_process,ev,data)
                 }
                 else if(Beacon_no ==2)
                 {
+                    
                     beaconrx_f = 1; //no need to wait
+                    bitmask = datapoint[1];
                     process_poll(&associator_process);
                 }
                 
