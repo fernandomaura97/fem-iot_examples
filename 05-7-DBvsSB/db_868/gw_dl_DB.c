@@ -479,7 +479,7 @@ PROCESS_THREAD(association_process,ev,data){
             printf("REASSOCIATION message sent to node %d\n", id_rx);
 
             //END NEW CODE
-            
+            break;
 
             }              
         }
