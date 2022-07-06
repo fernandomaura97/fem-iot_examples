@@ -120,7 +120,6 @@ unsigned int uart1_send_bytes(const unsigned char *s, unsigned int len){
 }
 
 void serial_in(){ // Implementa la lògica a la cadena de caràcters que ha entrat al UART. node_db_24
-    printf("yoyyoyoyoyo");
     char buffer_header[20];
     strcpy(buffer_header, buf_in);
     char *header; 
@@ -436,7 +435,21 @@ PROCESS_THREAD(association_process, ev, data)
 
           if (linkaddr_cmp(&addr_stas[i], &buffer_addr)){ //if they are the same then
             oldaddr = 1;
-            printf("Address already found at pos %d\n", i);
+            LOG_DBG("Address already found at pos %d\n", i);
+
+          //NEW CODE; TEST 
+            buf_assoc[0] = 0b01000000;
+            buf_assoc[1] = id_rx;
+
+            nullnet_buf = (uint8_t*)&buf_assoc;
+            nullnet_len = sizeof(buf_assoc);
+
+            NETSTACK_NETWORK.output(&buffer_addr);
+            printf("REASSOCIATION message sent to node %d\n", id_rx);
+
+          //END NEW CODE
+
+
             break;     
           }   //if we have this address in our list, we don't need to add it again                
       }

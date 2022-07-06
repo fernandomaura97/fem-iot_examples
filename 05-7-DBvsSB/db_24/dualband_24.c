@@ -77,7 +77,7 @@ static struct hare_stats_t{
     } hare_stats;
 #pragma pack(pop)
 
-#pragma pack(push,1)git pull
+#pragma pack(push,1)
 static struct aggregation_stats_t{
   struct hare_stats_t p1;
   struct hare_stats_t p2;

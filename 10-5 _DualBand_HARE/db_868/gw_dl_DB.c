@@ -139,6 +139,7 @@ childs_polled get_childs_ID(uint8_t nodeid_t, childs_polled childs)
     }
     return childs;
 }
+
 childs_polled get_childs_ID_m(uint8_t nodeid_t, childs_polled childs)
 {
     
@@ -465,16 +466,29 @@ PROCESS_THREAD(association_process,ev,data){
             if (linkaddr_cmp(&addr_stas[i], &buffer_addr)){ //if they are the same then
             oldaddr = 1;
             printf("Address already found at pos %d\n", i);
-            break;     
+            //break;     
 
-            }   //if we have this address in our list, we don't need to add it again                
+           //NEW CODE; TEST 
+            buf_assoc[0] = 0b01000000;
+            buf_assoc[1] = id_rx;
+
+            nullnet_buf = (uint8_t*)&buf_assoc;
+            nullnet_len = sizeof(buf_assoc);
+
+            NETSTACK_NETWORK.output(&buffer_addr);
+            printf("REASSOCIATION message sent to node %d\n", id_rx);
+
+            //END NEW CODE
+            break;
+
+            }              
         }
 
         if(!oldaddr){
             
             for(i = 0; i<ROUTENUMBER; i++){
 
-                if(linkaddr_cmp(&addr_stas[i], &addr_empty))
+                if(linkaddr_cmp(&addr_stas[i], &addr_empty)) //if address is empty, we can use it
                     {
                     linkaddr_copy(&addr_stas[i], &buffer_addr); //if we don't have it, add it
                     printf("Address ");
@@ -489,6 +503,7 @@ PROCESS_THREAD(association_process,ev,data){
 
                     NETSTACK_NETWORK.output(&buffer_addr);
                     printf("Association message sent to node %d\n", id_rx);
+                    memset(buf_assoc, 0, sizeof(buf_assoc));
                     break;
                     //oldaddr = 1;     
                     }
