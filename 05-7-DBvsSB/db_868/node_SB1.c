@@ -436,6 +436,9 @@ PROCESS_THREAD(associator_process, ev,data){
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL); //wait until beacon 
     
         time_of_beacon_rx = clock_time();
+
+        time_until_poll = T_MDB + ((nodeid-1) * (T_SLOT + T_GUARD)) - T_GUARD; 
+        etimer_set( &poll_etimer, time_until_poll);
         
         if(!is_associated)
         {   
@@ -486,11 +489,10 @@ PROCESS_THREAD(associator_process, ev,data){
         if( amipolled_f == 1){
             printf("I'm transmitting in the %dth slot\n", nodeid);
             
-            time_until_poll = T_MDB + ((nodeid-1) * (T_SLOT + T_GUARD)) - T_GUARD; 
+           
             //printf("radio off, time until radio on: %lu ticks, %lu seconds\n", time_until_poll ,time_until_poll/CLOCK_SECOND);              
             NETSTACK_RADIO.off();
             RTIMER_BUSYWAIT(5);
-            etimer_set( &poll_etimer, time_until_poll);
             PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&poll_etimer));
             NETSTACK_RADIO.on();
             printf("radio back on\n");
