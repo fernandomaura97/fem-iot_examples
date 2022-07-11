@@ -18,7 +18,7 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_DBG
 
-#define COOJA 1
+#define COOJA 0
 
 #define NODEID1 1  // non-adaptive, test
 #define NODEID2 2 //DHT22
@@ -399,8 +399,12 @@ PROCESS_THREAD(rx_process,ev,data)
                 
         else if(frame_header ==3) {
             if(is_associated) {
-                process_poll(&poll_process);    
-                LOG_DBG("received poll message\n");
+                
+                uint8_t polled_id = datapoint[1];
+                LOG_DBG("received poll message for %d\n", polled_id);
+                if(polled_id ==nodeid){
+                    process_poll(&poll_process);
+                }    
                 }
             else{
                 LOG_ERR("I'm not associated!!!!!\n");
@@ -499,7 +503,7 @@ PROCESS_THREAD(associator_process, ev,data){
         }
 
         else if (amipolled_f == 0) { //if not polled, just wait for the next beacon
-            printf("Radio off until the next beacon\n");
+            printf("Radio off until the next beacon\n");COOJA
             NETSTACK_RADIO.off();
             RTIMER_BUSYWAIT(5);
             etimer_set( &poll_etimer, T_BEACON - 2*CLOCK_SECOND);
