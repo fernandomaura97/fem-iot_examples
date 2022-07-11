@@ -301,6 +301,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
         for(i = 1; i<9; i++)
         {
             if(bitmask & 0x01){
+                
                 bitmask = bitmask >> 1;
                 
                 switch(i){
@@ -341,43 +342,30 @@ PROCESS_THREAD(coordinator_process, ev,data)
                             LOG_DBG("node DB2 already polled\n");
                         }
                         break; 
+                    
+                    
                     case 5:
-                    case 6:
-                        current_pollDB = 3;
-                        if(flags.nodeDB3 == 0){
-                            flags.nodeDB3 = 1;
-                            LOG_INFO("polling node DB3\n");
-                            pollbuf[0] = 0b01100000; //poll is 3
-                            pollbuf[1] = 3;
-                            nullnet_buf = (uint8_t*)&pollbuf;
-                            nullnet_len = sizeof(pollbuf);
-                            NETSTACK_NETWORK.output(NULL); 
-                        }   
-                        else{
-                            LOG_DBG("node DB3 already polled\n");
-                        }
-                        break;
-
+                    case 6: 
                     case 7:
-                    case 8:
-                        current_pollDB = 4;
-                        if(flags.nodeDB4 == 0){
-                            flags.nodeDB4 = 1;
-                            printf("polling node DB4\n");
-                            
-                            pollbuf[0] = 0b01100000; //poll is 3
-                            pollbuf[1] = 4;
-                            nullnet_buf = (uint8_t*)&pollbuf;
-                            nullnet_len = sizeof(pollbuf);
-                            NETSTACK_NETWORK.output(NULL); 
-                        }
-                        else{
-                            printf("node DB4 already polled\n");
-                        }
+                    case 8:      
+                        current_pollDB = i;
+                        LOG_INFO("polling node SB%d\n",i);
+
+                        pollbuf[0] = 0b01100000; //poll is 3
+                        pollbuf[1] = current_pollDB;
+                        nullnet_buf = (uint8_t*)&pollbuf;
+                        nullnet_len = sizeof(pollbuf);
+                        NETSTACK_NETWORK.output(NULL); 
+
+                        break;                    
+                    
+                    default:
+                        LOG_ERR("error in bitmask\n");
                         break;
+                        
                 }                                
                 
-                if(i ==2 || i ==4 || i ==6 || i ==8){
+                if(i ==2 || i ==4 || i == 5 || i == 6 || i == 7 || i == 8){  //DB nodes come 2 in 2, since they have 2 child nodes assigned
 
                     etimer_set(&periodic_timer, T_SLOT); //set the timer for the next interval
                     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
@@ -385,7 +373,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
                     if(!poll_response_received){
                         
                         LOG_DBG("polling node %d, no response!! TRYING AGAIN \n", current_pollDB);
-                        
+                    
                         NETSTACK_NETWORK.output(NULL); 
                     }
 

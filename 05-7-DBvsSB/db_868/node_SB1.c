@@ -390,7 +390,7 @@ PROCESS_THREAD(rx_process,ev,data)
                 etimer_set(&jitter, CLOCK_SECOND + random_rand() % (CLOCK_SECOND/2));
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&jitter));
 
-                process_poll(&poll_process); //only happens first time, not associated
+                //process_poll(&poll_process); //only happens first time, not associated
             }
             else{
                 LOG_DBG("error, different adresses");
