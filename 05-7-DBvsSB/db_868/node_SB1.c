@@ -18,7 +18,7 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_DBG
 
-#define COOJA 0
+#define COOJA 1
 
 #define NODEID1 1  // non-adaptive, test
 #define NODEID2 2 //DHT22
@@ -305,7 +305,7 @@ PROCESS_THREAD(rx_process,ev,data)
     #if COOJA
     uint8_t seed = linkaddr_node_addr.u8[0];
     random_init(seed);
-    nodeid = (random_rand() % 8) + 1;
+    nodeid = 5+(random_rand() % 4);
     #endif
     printf("***NODEID***: %d\n", nodeid);
     
@@ -486,7 +486,7 @@ PROCESS_THREAD(associator_process, ev,data){
         if( amipolled_f == 1){
             printf("I'm transmitting in the %dth slot\n", nodeid);
             
-            time_until_poll = T_MDB + ((NODEID-1) * (T_SLOT + T_GUARD)) - T_GUARD; 
+            time_until_poll = T_MDB + ((nodeid-1) * (T_SLOT + T_GUARD)) - T_GUARD; 
             //printf("radio off, time until radio on: %lu ticks, %lu seconds\n", time_until_poll ,time_until_poll/CLOCK_SECOND);              
             NETSTACK_RADIO.off();
             RTIMER_BUSYWAIT(5);
