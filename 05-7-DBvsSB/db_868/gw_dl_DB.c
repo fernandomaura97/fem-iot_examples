@@ -22,10 +22,10 @@
 #define NODEID_DHT22_1 2
 #define NODEID_MGAS2 3
 #define NODEID_DHT22_2 4
-#define NODEID_O3_1 5
-#define NODEID_O3_2 6
-#define NODEID_PM10_1 7
-#define NODEID_PM10_2 8
+#define NODEID_SB_1 5
+#define NODEID_SB_2 6
+#define NODEID_SB_3 7
+#define NODEID_SB_4 8
 
 //FOR BITMASKS
 #define NODEID1 1  // non-adaptive, test
@@ -37,6 +37,7 @@
 #define NODEID7 64
 #define NODEID8 128
 
+/*
 typedef struct sensor_dataold_t {
   uint8_t nodeid;
   int16_t humidity;
@@ -48,6 +49,7 @@ typedef struct sensor_dataold_t {
   float no2;
 } sensor_dataold_t;
 static sensor_dataold_t sensors;
+*/
 
 typedef struct sensor_data_t {  
           uint8_t id1;
@@ -518,25 +520,11 @@ PROCESS_THREAD(association_process,ev,data){
 
 PROCESS_THREAD(callback_process,ev,data){
 
-    uint32_t fbuf; //float buffer
-    union {
-        float float_variable;
-        uint8_t temp_array[4];
-        } u;
-  
-    /*    union{
-        uint32_t u32_var;
-        uint8_t temp_array[4];
-        } ua;
-    */    
-
-    union {
-        int16_t u16_var;
-        uint8_t temp_array[2];
-        } u16_union;
-    
+       
     static uint8_t frame; 
     static uint8_t *buf; 
+    static aggregation_msg ag_msg; 
+    static hare_stats_t hare_stats_msg;
     PROCESS_BEGIN();
 
 
@@ -552,6 +540,8 @@ PROCESS_THREAD(callback_process,ev,data){
         frame = (buf[0] & 0b11100000)>>5;
         uint8_t frame2 = (buf[0] & 0b00011111);
         
+        
+
         if (frame == 0){
             LOG_DBG("Beacon received ??\n %d %d %d \n", buf[0], buf[1], buf[2]);
             LOG_INFO_LLADDR(&from);
@@ -571,160 +561,61 @@ PROCESS_THREAD(callback_process,ev,data){
         else if( frame ==4){
             LOG_DBG("Sensor Data received\n");
             //process_poll(&parser_process);
-            if(cb_len == sizeof(aggregation_msg)){  //IF AGGREGATION MESSSAGE RECEIVED 
-                static aggregation_msg ag_msg; 
-                memcpy(&ag_msg, buf, sizeof(aggregation_msg));
-
-                uint8_t nodeid_DB = frame2;
-
-                childs_polled kids_polled;
-                kids_polled = get_childs_ID(nodeid_DB, kids_polled);
-
-
-            /*  
-                LOG_DBG("RAW DATA!!: ");
-                #if LOG_LEVEL == LOG_LEVEL_DBG
                
-                for(int i = 0; i<sizeof(aggregation_msg); i++){
-                    printf("%d ", buf[i]);
-                }
-                printf("\n");
-                #endif
-            */
-                
-                //JSON parser: 
-                printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2, get_nodeid(kids_polled.nodeid1), get_nodeid(kids_polled.nodeid2),ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
-                memset(&ag_msg, 0, sizeof(aggregation_msg));
-                memset(&buf , 0, sizeof(aggregation_msg));
-                memset(&global_buffer, 0, sizeof(global_buffer));
-                
-            } 
             poll_response_received = 1; //we received a poll response
             //switch(buf[0] & 31){
             //LOG_DBG("header == %d\n" , buf[0]&0b00011111);
             //LOG_DBG("MSG RX: %d %d %d %d %d %d %d %d\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]); DEPRECATED
             switch(frame2) //last 5 bits of the first byte is for NodeID?
             {
-                
+                case NODEID_MGAS1:  //1
+                case NODEID_DHT22_1:    //2
                 case NODEID_MGAS2:
+                case NODEID_DHT22_2:    //4
+                
                             
-                u.temp_array[0] = buf[1];
-                u.temp_array[1] = buf[2];
-                u.temp_array[2] = buf[3];
-                u.temp_array[3] = buf[4];
-                sensors.co = u.float_variable;
-            
+                if(cb_len == sizeof(aggregation_msg)){  //IF AGGREGATION MESSSAGE RECEIVED 
+                    
+                    
+                    memcpy(&ag_msg, buf, sizeof(aggregation_msg));
 
-                u.temp_array[0] = buf[5];
-                u.temp_array[1] = buf[6];
-                u.temp_array[2] = buf[7];
-                u.temp_array[3] = buf[8];
-                sensors.no2 = u.float_variable;
+                    uint8_t nodeid_DB = frame2;
 
-
-                printf("{\"nodeID\": %d", buf[0] & 0b00011111);
-                printf(",\"co\": ");
-                fbuf = sensors.co * 100;
-                printf("%lu.%02lu", fbuf/100, fbuf%100);
-                printf(", \"no2\": ");
-                fbuf = sensors.no2 * 100;
-                printf("%lu.%02lu", fbuf/100, fbuf%100);
-                printf("}\n");    
-                break;
-
-
-            case NODEID_MGAS1:
-            case NODEID_DHT22_1:
-            case NODEID_DHT22_2:
-            
-                /*
-                memcpy(&sensor_data.id1, &buf[0], sizeof(buf[0]));
-                memcpy(&sensor_data.length1, &buf[1], sizeof(buf[1]));
-                //memcpy(&sensor_data.value_temperature1, &buf[2], sizeof(int16_t));
-
-                u16_union.temp_array[0] = buf[2];
-                u16_union.temp_array[1] = buf[3];
-
-                memcpy(&sensor_data.value_temperature1, &u16_union.u16_var, sizeof(int16_t)); 
-                ///
-
-                u16_union.temp_array[0] = buf[4];
-                u16_union.temp_array[1] = buf[5];
-
-                memcpy(&sensor_data.value_humidity1, &u16_union.u16_var, sizeof(int16_t)); 
-
-                //memcpy(&sensor_data.value_humidity1, &buf[4], sizeof(int16_t));
-            
-                memcpy(&sensor_data.id2, &buf[6], sizeof(buf[6]));
-                memcpy(&sensor_data.length2, &buf[7], sizeof(buf[7]));
-
-                u16_union.temp_array[0] = buf[8];
-                u16_union.temp_array[1] = buf[9];
-
-                memcpy(&sensor_data.value_temperature2, &u16_union.u16_var, sizeof(int16_t));
-                //memcpy(&sensor_data.value_temperature2, &buf[8], sizeof(int16_t));
-                
-                u16_union.temp_array[0] = buf[10];
-                u16_union.temp_array[1] = buf[11];
-                memcpy(&sensor_data.value_humidity2, &u16_union.u16_var, sizeof(int16_t));
-                */
-
-                
-                //memcpy(&sensor_data.value_humidity2, &buf[10], sizeof(int16_t));
-
-                /*   printf("ID1: %d\n", sensor_data.id1);                                                                                 DEPRECATED
-                printf("Length1: %d\n", sensor_data.length1);
-                printf("Value_temperature1: %02d.%02d\n", (sensor_data.value_temperature1)/10, (sensor_data.value_temperature1)%10);
-                printf("Value_humidity1: %02d.%02d\n", (sensor_data.value_humidity1)/10, (sensor_data.value_humidity1)%10);
-                
-                printf("ID2: %d\n", sensor_data.id2);
-                printf("Length2: %d\n", sensor_data.length2);
-                printf("Value_temperature2: %02d.%02d\n", (sensor_data.value_temperature2)/10, (sensor_data.value_temperature2)%10);
-                printf("Value_humidity2: %02d.%02d\n", (sensor_data.value_humidity2)/10, (sensor_data.value_humidity2)%10);
-            */
+                    childs_polled kids_polled;
+                    kids_polled = get_childs_ID(nodeid_DB, kids_polled);               
+                    //JSON parser: 
+                    printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2, get_nodeid(kids_polled.nodeid1), get_nodeid(kids_polled.nodeid2),ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
+                    memset(&ag_msg, 0, sizeof(aggregation_msg));
+                    memset(&buf , 0, sizeof(aggregation_msg));
+                    memset(&global_buffer, 0, sizeof(global_buffer));    
+                }
+                else{
+                    LOG_DBG("ERROR: wrong size of aggregation message\n");
+                }      
                 break;
                 
-            case NODEID_O3_1:
-            case NODEID_O3_2:
+            case NODEID_SB_1:
+            case NODEID_SB_2:
+            case NODEID_SB_3:
+            case NODEID_SB_4:
                 
-                u16_union.temp_array[0] = buf[1];
-                u16_union.temp_array[1] = buf[2];
                 
-                memcpy(&sensors.temperature, &u16_union.u16_var, sizeof(int16_t)); 
-            
-
-                u16_union.temp_array[0] = buf[3];
-                u16_union.temp_array[1] = buf[4];
-                memcpy(&sensors.humidity, &u16_union.u16_var, sizeof(int16_t));
-
-                u.temp_array[0] = buf[5];
-                u.temp_array[1] = buf[6];
-                u.temp_array[2] = buf[7];
-                u.temp_array[3] = buf[8];
+                if(cb_len == sizeof(hare_stats_t)){
                 
-            
-                memcpy(&sensors.o3, &u.float_variable, sizeof(float));
-                fbuf = sensors.o3 * 100;
-                
-
-
-                printf("{\"nodeID\": %d", buf[0]&0b00011111);
-                printf(",\"ppm\": ");
-                printf("%lu.%02lu", fbuf/100, fbuf%100);
-            
-                printf(",\"Humidity\": %d.%d", sensors.humidity/10, sensors.humidity%10);
-                printf(",\"Temperature\": %d.%d", sensors.temperature/10, sensors.temperature%10);
-                printf("}\n");
-                break;
-            case NODEID_PM10_1:
-            case NODEID_PM10_2:
-            
-                sensors.pm10 = (buf[2] << 8) | buf[1];
-                printf("{\"nodeID\": %d", buf[0]&0b00011111);
-                printf(",\"pm10\": %d", sensors.pm10);
-                printf("}\n");
-                break;
-                //AOK!!
+                    
+                    memcpy(&hare_stats_msg, buf, sizeof(hare_stats_t));
+                    uint8_t h_nodeid = (hare_stats_msg.header & 0b00011111);
+                    printf(" { \"Nodeid_SB\": %d, \"Temp\": %d.%d, \"Hum\": %d.%d , \"Pw_tx1\": %d, \"n_beacons\": %d, \"n_transmissions\": %d, \"permil_radio_on\": %d, \"permil_tx\": %d, \"permil_rx\": %d}\n" ,h_nodeid, hare_stats_msg.temperature/10, hare_stats_msg.temperature%10,  hare_stats_msg.humidity/10,   hare_stats_msg.humidity%10,  hare_stats_msg.power_tx,  hare_stats_msg.n_beacons_received, hare_stats_msg.n_transmissions, hare_stats_msg.permil_radio_on, hare_stats_msg.permil_tx, hare_stats_msg.permil_rx);             
+                    
+                    
+                   
+                    memset(&hare_stats_msg, 0, sizeof(hare_stats_t));
+                    memset(&buf , 0, sizeof(hare_stats_t));
+                    memset(&global_buffer, 0, sizeof(global_buffer));
+                }
+                else{
+                    LOG_DBG("ERROR: wrong size of hare stats message\n");
+                }
             
             default:
                 /*printf("unknown nodeID %d\n", buf[0]);
