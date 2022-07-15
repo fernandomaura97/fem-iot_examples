@@ -64,6 +64,9 @@ typedef struct sensor_data_t {
           
           } sensor_data_t;
 
+
+
+
 //static struct sensor_data_t sensor_data;
 
 
@@ -173,7 +176,15 @@ childs_polled get_childs_ID_m(uint8_t nodeid_t, childs_polled childs)
 static char *rxdata;
 static uint8_t bitmask;
 
-static uint16_t lost_message_counter = 0;
+//static uint16_t lost_message_counter = 0;
+typedef struct stats_lmc_t {
+    uint16_t id1;
+    uint16_t id2;
+    uint16_t id3;
+    uint16_t id4;
+} stats_lmc_t;
+static struct stats_lmc_t stats_lmc;
+
 static bool poll_response_received = 0; 
 static linkaddr_t addr_stas[ROUTENUMBER]; //store sta's addresses in here, for routing and sending
 static linkaddr_t buffer_addr; 
@@ -269,7 +280,10 @@ PROCESS_THREAD(coordinator_process, ev,data)
         //bitmask = 0xff;
         LOG_DBG("Bitmask is %d\n", bitmask);
         printf("AA0\n"); //NODE-RED HEARTBEAT
-        printf("LMC,%d",lost_message_counter);
+        //printf("LMC,%d",lost_message_counter);
+        printf("{\"LMC1\":%d,\"LMC2\":%d,\"LMC3\":%d,\"LMC4\":%d}", stats_lmc.id1, stats_lmc.id2, stats_lmc.id3, stats_lmc.id4); 
+        
+        
         etimer_set(&beacon_timer, BEACON_INTERVAL); //set the timer for the next interval
         
         static uint8_t i;
@@ -390,9 +404,31 @@ PROCESS_THREAD(coordinator_process, ev,data)
                             childs_polled nins_polled = get_childs_ID_m(current_pollDB, nins_polled);
                             LOG_INFO("no response\n");
                             printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": 0, \"H1\": 0, \"Pw_tx1\": 0,\"n_beacons1\": 0, \"n_transmissions1\": 0, \"permil_radio_on1\": 0,\"permil_tx1\": 0, \"permil_rx1\": 0, \"T2\": 0, \"H2\": 0, \"Pw_tx2\": 0, \"n_beacons2\": 0,  \"n_transmissions2\": 0, \"permil_radio_on2\": 0, \"permil_tx2\": 0, \"permil_rx2\": 0}\n" ,current_pollDB, nins_polled.nodeid1, nins_polled.nodeid2); 
-                            lost_message_counter ++;
+                            //lost_message_counter ++;
+                            
+                            switch(i)
+                            {
+                                case 1:
+                                    stats_lmc.id1 ++;
+                                    break;
+                                case 2:
+                                    stats_lmc.id2 ++;
+                                    break;
+                                case 3: 
+                                    stats_lmc.id3 ++;
+                                    break;
+                                case 4:
+                                    stats_lmc.id4 ++;
+                                    break;
+                                case 5:
+                                    break;
+                                default:
+                                    LOG_ERR("ID in LMC? \n");
+                                    break;
+                           }
+
                         }
-                        else{
+                        else{ //if
                             LOG_INFO("no response(EXPECTED) \n");
                         }
                 
@@ -404,8 +440,13 @@ PROCESS_THREAD(coordinator_process, ev,data)
                 bitmask = bitmask >> 1;
                 dt = clock_time() - t;
                 LOG_INFO("NOT polling child node %d, dt: %lu\n", i, dt/CLOCK_SECOND);
-                etimer_set(&periodic_timer, T_SLOT+T_GUARD); //set the timer for the next interval
-                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+                
+                if(i ==2 || i ==3 || i ==4 || i == 5 || i == 6 || i == 7 || i == 8){  //DB nodes come 2 in 2, since they have 2 child nodes assigned
+                                       
+                     etimer_set(&periodic_timer, T_SLOT+T_GUARD); //set the timer for the next interval
+                     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+                }
+               
 
                 if( (i==2) & (!poll_response_received)){
                             
