@@ -281,7 +281,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
         LOG_DBG("Bitmask is %d\n", bitmask);
         printf("AA0\n"); //NODE-RED HEARTBEAT
         //printf("LMC,%d",lost_message_counter);
-        printf("{\"LMC1\":%d,\"LMC2\":%d,\"LMC3\":%d,\"LMC4\":%d}", stats_lmc.id1, stats_lmc.id2, stats_lmc.id3, stats_lmc.id4); 
+        printf("{\"LMC1\":%d,\"LMC2\":%d,\"LMC3\":%d,\"LMC4\":%d}\n", stats_lmc.id1, stats_lmc.id2, stats_lmc.id3, stats_lmc.id4); 
         
         
         etimer_set(&beacon_timer, BEACON_INTERVAL); //set the timer for the next interval
