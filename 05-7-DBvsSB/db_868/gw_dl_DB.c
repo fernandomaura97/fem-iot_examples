@@ -117,6 +117,20 @@ uint8_t get_nodeid(uint8_t id)
     return 0;
 }
 
+uint8_t get_nodeid_reverse(uint8_t id)
+{
+    uint8_t i;
+    for (i = 0; i < 8; i++)
+    {
+        if (id == (i+1))
+        {
+            return (1 << i);
+        }
+    }
+    return 0;
+}
+
+
 childs_polled get_childs_ID(uint8_t nodeid_t, childs_polled childs)
 {
     
@@ -173,8 +187,33 @@ childs_polled get_childs_ID_m(uint8_t nodeid_t, childs_polled childs)
     return childs;
 }
 
+
+childs_polled are_childs_polled( childs_polled childs, uint8_t bitmask_in)
+{
+    uint8_t masked1 = bitmask_in & childs.nodeid1;
+    uint8_t masked2 = bitmask_in & childs.nodeid2;
+    
+    if(masked1 & childs.nodeid1) {
+            childs.nodeid1 = 1;
+        }
+    else{
+            childs.nodeid1 = 0;
+        }
+    
+    if (masked2 & childs.nodeid2) {
+            childs.nodeid2 = 1;
+        }
+    else{
+            childs.nodeid2 = 0;
+        }
+    return childs;
+}
+
+
+
 static char *rxdata;
 static uint8_t bitmask;
+static uint8_t bitmask_copy; //for storing the bitmask before it is changed
 
 //static uint16_t lost_message_counter = 0;
 typedef struct stats_lmc_t {
@@ -238,6 +277,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
     static struct etimer guard_timer;
     static struct etimer mm_timer;
     static struct etimer beacon_timer;
+    childs_polled kids;
 
     
     static uint8_t beaconbuf[3];
@@ -311,7 +351,8 @@ PROCESS_THREAD(coordinator_process, ev,data)
 
         t=clock_time();
         LOG_DBG("seconds since boot: %lu\n", t/CLOCK_SECOND);
-        
+        bitmask_copy = bitmask; //save the bitmask before it is changed
+
         for(i = 1; i<9; i++)
         {
             if(bitmask & 0x01){
@@ -402,6 +443,8 @@ PROCESS_THREAD(coordinator_process, ev,data)
                         if(i<5){ //if we are polling the first 4 child nodes, account for error
 
                             childs_polled nins_polled = get_childs_ID_m(current_pollDB, nins_polled);
+
+                            
                             LOG_INFO("no response\n");
                             printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": 0, \"H1\": 0, \"Pw_tx1\": 0,\"n_beacons1\": 0, \"n_transmissions1\": 0, \"permil_radio_on1\": 0,\"permil_tx1\": 0, \"permil_rx1\": 0, \"T2\": 0, \"H2\": 0, \"Pw_tx2\": 0, \"n_beacons2\": 0,  \"n_transmissions2\": 0, \"permil_radio_on2\": 0, \"permil_tx2\": 0, \"permil_rx2\": 0}\n" ,current_pollDB, nins_polled.nodeid1, nins_polled.nodeid2); 
                             //lost_message_counter ++;
@@ -409,10 +452,29 @@ PROCESS_THREAD(coordinator_process, ev,data)
                             switch(i)
                             {
                                 case 1:
-                                    stats_lmc.id1 ++;
+                                   //DUAL BAND BOX!!
+
+                                    kids = get_childs_ID( get_nodeid_reverse(current_pollDB) , kids);
+
+                                    LOG_DBG("ID1: %d, ID2: %d\n", kids.nodeid1, kids.nodeid2);
+
+                                    kids = are_childs_polled(kids, bitmask_copy);
+                                    LOG_DBG("IS_POLLED1: %d, IS_POLLED2: %d\n", kids.nodeid1, kids.nodeid2);
+                                    
+                                    if(kids.nodeid1 ==1 )
+                                    {
+                                        stats_lmc.id1++;
+                                        LOG_DBG("adding to lmc id1: %d\n", stats_lmc.id1);
+                                    }
+                                    
+                                    if(kids.nodeid2 ==1)
+                                    {
+                                        stats_lmc.id2++; 
+                                        LOG_DBG("adding to lmc id2: %d\n", stats_lmc.id1);
+                                    }
                                     break;
                                 case 2:
-                                    stats_lmc.id2 ++;
+                                    LOG_ERR("this shouldn't happen (DB)!!!!!\n");
                                     break;
                                 case 3: 
                                     stats_lmc.id3 ++;
@@ -556,6 +618,7 @@ PROCESS_THREAD(callback_process,ev,data){
     static uint8_t frame; 
     static uint8_t *buf; 
     static aggregation_msg ag_msg; 
+    static aggregation_msg empty = {0};
     static hare_stats_t hare_stats_msg;
     PROCESS_BEGIN();
 
@@ -601,11 +664,8 @@ PROCESS_THREAD(callback_process,ev,data){
             switch(frame2) //last 5 bits of the first byte is for NodeID?
             {
                 case NODEID_MGAS1:  //1
-                case NODEID_DHT22_1:    //2
-                //case NODEID_MGAS2:
-                //case NODEID_DHT22_2:    //4
-                
-                            
+                case NODEID_DHT22_1:    //2 
+                           
                 if(cb_len == sizeof(aggregation_msg)){  //IF AGGREGATION MESSSAGE RECEIVED 
                     
                     
@@ -614,9 +674,36 @@ PROCESS_THREAD(callback_process,ev,data){
                     uint8_t nodeid_DB = frame2;
 
                     childs_polled kids_polled;
-                    kids_polled = get_childs_ID(nodeid_DB, kids_polled);               
+
+                    uint8_t nodeid_DB_r = get_nodeid_reverse(nodeid_DB); //get nodeid in Bitmask form
+                    
+                    kids_polled = get_childs_ID(nodeid_DB_r, kids_polled);  //polled child nodes in Bitmask form
+
+                           
                     //JSON parser: 
                     printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": %d.%d, \"H1\": %d.%d, \"Pw_tx1\": %d, \"n_beacons1\": %d, \"n_transmissions1\": %d, \"permil_radio_on1\": %d,\"permil_tx1\": %d, \"permil_rx1\": %d, \"T2\": %d.%d, \"H2\": %d.%d, \"Pw_tx2\": %d, \"n_beacons2\": %d,  \"n_transmissions2\": %d, \"permil_radio_on2\": %d, \"permil_tx2\": %d, \"permil_rx2\": %d}\n",frame2, get_nodeid(kids_polled.nodeid1), get_nodeid(kids_polled.nodeid2),ag_msg.p1.temperature/10, ag_msg.p1.temperature%10, ag_msg.p1.humidity/10 ,ag_msg.p1.humidity%10, ag_msg.p1.power_tx, ag_msg.p1.n_beacons_received, ag_msg.p1.n_transmissions, ag_msg.p1.permil_radio_on, ag_msg.p1.permil_tx, ag_msg.p1.permil_rx, ag_msg.p2.temperature/10, ag_msg.p2.temperature%10, ag_msg.p2.humidity/10, ag_msg.p2.humidity%10, ag_msg.p2.power_tx, ag_msg.p2.n_beacons_received, ag_msg.p2.n_transmissions, ag_msg.p2.permil_radio_on, ag_msg.p2.permil_tx, ag_msg.p2.permil_rx);
+                    
+                    
+                    childs_polled lmc_kids;
+                    lmc_kids = are_childs_polled(kids_polled, bitmask_copy);      
+
+                    if(lmc_kids.nodeid1 ==1){
+
+                        //compare
+                        if(memcmp(&ag_msg.p1, &empty.p1, sizeof(ag_msg.p1)) == 0){
+                            
+                            LOG_ERR("expected but no data received from CH1: (T %d  H %d TX_PWR %d)\n", ag_msg.p1.temperature, ag_msg.p1.humidity, ag_msg.p1.power_tx);
+                            stats_lmc.id1 ++;
+                        }
+                    }
+                    if(lmc_kids.nodeid2 ==1){
+    
+                        //compare
+                        if(memcmp(&ag_msg.p2, &empty.p2, sizeof(ag_msg.p2)) == 0){
+
+                            LOG_ERR("expected but no data received from CH2: (T %d  H %d TX_PWR %d)\n", ag_msg.p2.temperature, ag_msg.p2.humidity, ag_msg.p2.power_tx);     
+                        }   
+                    }
                     memset(&ag_msg, 0, sizeof(aggregation_msg));
                     memset(&buf , 0, sizeof(aggregation_msg));
                     memset(&global_buffer, 0, sizeof(global_buffer));    
