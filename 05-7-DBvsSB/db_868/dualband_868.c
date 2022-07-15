@@ -26,7 +26,7 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID_DB NODEID2
+#define NODEID_DB NODEID1
 
 
 #define T_MDB  (10 * CLOCK_SECOND)

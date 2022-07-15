@@ -29,10 +29,10 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID NODEID5
+#define NODEID NODEID4
 
 
-#define T_MDB  (10 * CLOCK_SECOND)
+#define T_MDB  (6 * CLOCK_SECOND)
 #define T_SLOT  (1.5 * CLOCK_SECOND)
 #define T_GUARD  (0.5 * CLOCK_SECOND)
 #define T_BEACON (60 * CLOCK_SECOND)
@@ -307,7 +307,7 @@ PROCESS_THREAD(rx_process,ev,data)
     random_init(seed);
     nodeid = 5+(random_rand() % 4);
     #endif
-    printf("***NODEID***: %d\n", nodeid);
+    printf("***NODEID_SB***: %d\n", nodeid);
     
     //initialize the struct 
     hare_stats.n_beacons_received = 0; 
@@ -503,7 +503,7 @@ PROCESS_THREAD(associator_process, ev,data){
         }
 
         else if (amipolled_f == 0) { //if not polled, just wait for the next beacon
-            printf("Radio off until the next beacon\n");COOJA
+            printf("Radio off until the next beacon\n");
             NETSTACK_RADIO.off();
             RTIMER_BUSYWAIT(5);
             etimer_set( &poll_etimer, T_BEACON - 2*CLOCK_SECOND);

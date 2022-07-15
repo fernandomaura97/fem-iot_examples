@@ -324,6 +324,8 @@ PROCESS_THREAD(coordinator_process, ev,data)
                             LOG_DBG("node DB1 already polled\n");
                         }
                         break;
+                    /*
+                    -------------- UNCOMMENT IF NODES 3 AND 4 ARE DUALBAND ----------- **TODO: use #DEFINE for this!
 
                     case 3: 
                     case 4:
@@ -342,8 +344,9 @@ PROCESS_THREAD(coordinator_process, ev,data)
                             LOG_DBG("node DB2 already polled\n");
                         }
                         break; 
-                    
-                    
+                    */
+                    case 3:  //IF SB3
+                    case 4: //IF SB4
                     case 5:
                     case 6: 
                     case 7:
@@ -365,7 +368,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
                         
                 }                                
                 
-                if(i ==2 || i ==4 || i == 5 || i == 6 || i == 7 || i == 8){  //DB nodes come 2 in 2, since they have 2 child nodes assigned
+                if(i ==2 || i ==3 || i ==4 || i == 5 || i == 6 || i == 7 || i == 8){  //DB nodes come 2 in 2, since they have 2 child nodes assigned
 
                     etimer_set(&periodic_timer, T_SLOT); //set the timer for the next interval
                     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
@@ -558,8 +561,8 @@ PROCESS_THREAD(callback_process,ev,data){
             {
                 case NODEID_MGAS1:  //1
                 case NODEID_DHT22_1:    //2
-                case NODEID_MGAS2:
-                case NODEID_DHT22_2:    //4
+                //case NODEID_MGAS2:
+                //case NODEID_DHT22_2:    //4
                 
                             
                 if(cb_len == sizeof(aggregation_msg)){  //IF AGGREGATION MESSSAGE RECEIVED 
@@ -581,7 +584,8 @@ PROCESS_THREAD(callback_process,ev,data){
                     LOG_DBG("ERROR: wrong size of aggregation message\n");
                 }      
                 break;
-                
+            case NODEID_MGAS2:
+            case NODEID_DHT22_2:   
             case NODEID_SB_1:
             case NODEID_SB_2:
             case NODEID_SB_3:
