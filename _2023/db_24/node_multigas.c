@@ -9,9 +9,11 @@
 #include <stdlib.h>
 #include "net/packetbuf.h"
 #include "sys/energest.h"
+#include <math.h>
+
 
 #include "dev/i2c.h"
-#include "dev/multigas.h" ss
+#include "dev/multigas.h"
 
 //#include "sys/energest.h"
 
@@ -78,12 +80,12 @@ static volatile uint8_t i_buf;
 static uint8_t nodeid;
 const uint8_t power_levels[3] = {0x46, 0x71, 0x7F}; // 0dB, 8dB, 14dB
 
-static struct s_mgas
+struct s_mgas
 {
 
     float co;
     float no2;
-}
+};
 
 static struct mydatas
 {
@@ -220,10 +222,10 @@ void m_and_send_dht22(uint8_t id)
 struct s_mgas measure_multigas()
 {
 
-    struct s_mgas s_mgas1
+    struct s_mgas s_mgas1;
     i2c_master_enable();
     mgsbegin(0x04); // check for return code (errors?)
-    mgspoweron();
+    mgspowerOn();
 
     s_mgas1.co = measure_CO();
 
@@ -234,7 +236,7 @@ struct s_mgas measure_multigas()
     s_mgas1.no2 = measure_NO2();
 
     LOG_DBG("NO2: ");
-    putFloat(s_mgas.no2, DEC2);
+    putFloat(s_mgas1.no2, DEC2);
     printf("\n");
 
 
@@ -263,7 +265,7 @@ uint8_t datasender(uint8_t id)
         // megabuf[0] = id;
         megabuf[0] = 0b10000000 | id;
         memcpy(&megabuf[1], &mydata.co, sizeof(mydata.co));
-        memcpymydata(&megabuf[5], &mydata.no2, sizeof(mydata.no2));
+        memcpy(&megabuf[5], &mydata.no2, sizeof(mydata.no2));
         printf("Sending %d %d %d %d %d %d %d %d %d\n", megabuf[0], megabuf[1], megabuf[2], megabuf[3], megabuf[4], megabuf[5], megabuf[6], megabuf[7], megabuf[8]);
 
         // make sure it's correct data
@@ -599,7 +601,9 @@ PROCESS_THREAD(poll_process, ev, data)
 
             //m_and_send_dht22(nodeid);
             struct s_mgas mgas1;
-            mgas1 = measure_multigas();Fº
+            mgas1 = measure_multigas();
+            memcpy(&mydata.co, &mgas1.co, sizeof(&mydata.co)); //padding for struct?
+            memcpy(&mydata.no2, &mgas1.no2, sizeof(mydata.no2));
             
         }
         else
