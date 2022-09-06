@@ -200,7 +200,7 @@ void putFloat( float f, tPrecision p )
     putLong( i ) ;
     putchar('\n') ;
 }
-
+/*
 void m_and_send_dht22(uint8_t id)
 {
     // uint8_t buf_dht22[5];
@@ -240,8 +240,8 @@ void m_and_send_dht22(uint8_t id)
     SENSORS_DEACTIVATE(dht22);
     return;
 }
-
-struct s_mgas measure_multigas()
+*/
+struct s_mgas measure_multigas(uint8_t id)
 {
 
     struct s_mgas s_mgas1;
@@ -267,8 +267,8 @@ struct s_mgas measure_multigas()
 
     hare_stats_mgas.header = 0b10000000|id;
 
-    memcpy(&hare_stats_mgas.co, &s_mgas1.co,sizeof(float);
-    memcpy(&hare_stats_mgas.co, &s_mgas1.no2, sizeof(float);
+    memcpy(&hare_stats_mgas.co, &s_mgas1.co,sizeof(float));
+    memcpy(&hare_stats_mgas.co, &s_mgas1.no2, sizeof(float));
 
     nullnet_buf = (uint8_t *)&hare_stats_mgas;
     nullnet_len = sizeof(hare_stats_mgas);
@@ -639,7 +639,7 @@ PROCESS_THREAD(poll_process, ev, data)
 
             //m_and_send_dht22(nodeid);
             struct s_mgas mgas1;
-            mgas1 = measure_multigas();
+            mgas1 = measure_multigas(nodeid);
             memcpy(&mydata.co, &mgas1.co, sizeof(&mydata.co)); //padding for struct?
             memcpy(&mydata.no2, &mgas1.no2, sizeof(mydata.no2));
 
