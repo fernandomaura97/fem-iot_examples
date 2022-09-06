@@ -33,7 +33,7 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID NODEID1
+#define NODEID NODEID5
 
 #define T_MDB (10 * CLOCK_SECOND)
 #define T_SLOT (1.5 * CLOCK_SECOND)
@@ -42,6 +42,8 @@
 
 static linkaddr_t from;
 static linkaddr_t dualband24_addr = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}; // empty address
+
+/*
 #pragma pack(push, 1)
 static struct hare_stats_t
 {
@@ -55,6 +57,29 @@ static struct hare_stats_t
     uint16_t permil_tx;
     uint16_t permil_rx;
 } hare_stats;
+#pragma pack(pop)
+
+*/
+
+
+
+#pragma pack(push,1)
+    static struct hare_stats2_t{
+        
+        uint8_t header; //header includes message type and node id
+        
+        float co;
+        float no2;
+        uint16_t pm10; 
+
+        uint8_t power_tx;
+        uint16_t n_beacons_received;
+        uint16_t n_transmissions; 
+        uint16_t permil_radio_on; // ‰ gotten through energest
+        uint16_t permil_tx;
+        uint16_t permil_rx;
+        } hare_stats_mgas;
+
 #pragma pack(pop)
 
 // TIMERS
@@ -81,9 +106,7 @@ static uint8_t nodeid;
 const uint8_t power_levels[3] = {0x46, 0x71, 0x7F}; // 0dB, 8dB, 14dB
 
 struct s_mgas
-{
-
-    float co;
+{   float co;
     float no2;
 };
 
@@ -97,7 +120,6 @@ static struct mydatas
     float o3;
     uint32_t noise;
     uint16_t pm10;
-
 } mydata;
 /*---------------------------------------------------------------------------*/
 
@@ -132,7 +154,7 @@ uint8_t am_i_polled(uint8_t bitmask, uint8_t id) // prints which nodes the beaco
 void send_and_count(const linkaddr_t *dest)
 {
     NETSTACK_NETWORK.output(dest);
-    hare_stats.n_transmissions++;
+    hare_stats_mgas.n_transmissions++;
 }
 
 // function to print the number of the NODEID (f.e. NODEID8 would return 8)
@@ -241,6 +263,15 @@ struct s_mgas measure_multigas()
         printf("\n");
 
     #endif
+
+
+    hare_stats_mgas.header = 0b10000000|id;
+
+    memcpy(&hare_stats_mgas.co, &s_mgas1.co,sizeof(float);
+    memcpy(&hare_stats_mgas.co, &s_mgas1.no2, sizeof(float);
+
+    nullnet_buf = (uint8_t *)&hare_stats_mgas;
+    nullnet_len = sizeof(hare_stats_mgas);
 
     return s_mgas1; 
 }
@@ -403,10 +434,10 @@ PROCESS_THREAD(rx_process, ev, data)
     printf("***NODEID***: %d\n", nodeid);
 
     // initialize the struct
-    hare_stats.n_beacons_received = 0;
-    hare_stats.n_transmissions = 0;
-    hare_stats.permil_radio_on = 0;
-    hare_stats.power_tx = 0;
+    hare_stats_mgas.n_beacons_received = 0;
+    hare_stats_mgas.n_transmissions = 0;
+    hare_stats_mgas.permil_radio_on = 0;
+    hare_stats_mgas.power_tx = 0;
 
     // PROCESS_YIELD();
     while (1)
@@ -429,7 +460,7 @@ PROCESS_THREAD(rx_process, ev, data)
             if (!beaconrx_f)
             { // if it's the first beacon received on this cycle
 
-                hare_stats.n_beacons_received++;
+                hare_stats_mgas.n_beacons_received++;
 
                 linkaddr_copy(&dualband24_addr, &from); // store coordinator address
 
@@ -560,7 +591,7 @@ PROCESS_THREAD(associator_process, ev, data)
                 etimer_set(&asotimer, 2 * CLOCK_SECOND + (random_rand() % (CLOCK_SECOND))); // add some jitter/randomness for the transmission
 
                 NETSTACK_RADIO.set_value(RADIO_PARAM_TXPOWER, power_levels[i_pwr]);
-                hare_stats.power_tx = power_levels[i_pwr];
+                hare_stats_mgas.power_tx = power_levels[i_pwr];
 
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&asotimer));
 
@@ -615,6 +646,8 @@ PROCESS_THREAD(poll_process, ev, data)
 
             //SEND THE MESSAGE DOWN HERE***
 
+
+             
         }
         else
         {
@@ -674,9 +707,9 @@ PROCESS_THREAD(energest_example_process, ev, data)
 
         // HARE STATS FLUSH
 
-        hare_stats.permil_radio_on = (ENERGEST_GET_TOTAL_TIME() - energest_type_time(ENERGEST_TYPE_TRANSMIT) - energest_type_time(ENERGEST_TYPE_LISTEN)) * 1000 / ENERGEST_GET_TOTAL_TIME();
-        hare_stats.permil_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT) * 1000 / ENERGEST_GET_TOTAL_TIME();
-        hare_stats.permil_rx = energest_type_time(ENERGEST_TYPE_LISTEN) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats_mgas.permil_radio_on = (ENERGEST_GET_TOTAL_TIME() - energest_type_time(ENERGEST_TYPE_TRANSMIT) - energest_type_time(ENERGEST_TYPE_LISTEN)) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats_mgas.permil_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats_mgas.permil_rx = energest_type_time(ENERGEST_TYPE_LISTEN) * 1000 / ENERGEST_GET_TOTAL_TIME();
     }
 
     PROCESS_END();
