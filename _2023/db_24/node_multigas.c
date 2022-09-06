@@ -228,18 +228,19 @@ struct s_mgas measure_multigas()
     mgspowerOn();
 
     s_mgas1.co = measure_CO();
-
-    LOG_DBG("CO: ");
-    putFloat(s_mgas1.co, DEC2);
-    printf("\n");
-
     s_mgas1.no2 = measure_NO2();
+    
+    #if (LOG_LEVEL >= LOG_LEVEL_DBG)
 
-    LOG_DBG("NO2: ");
-    putFloat(s_mgas1.no2, DEC2);
-    printf("\n");
+        printf("CO: ");
+        putFloat(s_mgas1.co, DEC2);
+        printf("\n");
 
+        printf("NO2: ");
+        putFloat(s_mgas1.no2, DEC2);
+        printf("\n");
 
+    #endif
 
     return s_mgas1; 
 }
@@ -381,8 +382,12 @@ void input_callback(const void *data, uint16_t len,
 /*---------------------------------------------------------------------------*/
 
 PROCESS_THREAD(rx_process, ev, data)
-{
+{   
+
+
+    // *****************************UNCOMMENT HERE ************************                 ªªªªªªªªªªªªªªªªªªªªªªªªªªªªªªªªªª
     static struct etimer Beacon_no_timer;
+     
     static struct etimer jitter;
     volatile static uint8_t *datapoint; // pointer to the packetbuf
     // static uint8_t buf[10];
@@ -518,7 +523,9 @@ PROCESS_THREAD(rx_process, ev, data)
         {
             LOG_INFO("Unknown packet received\n");
         }
-    } // while
+        
+    
+    } //end while
     PROCESS_END();
 }
 
@@ -604,7 +611,10 @@ PROCESS_THREAD(poll_process, ev, data)
             mgas1 = measure_multigas();
             memcpy(&mydata.co, &mgas1.co, sizeof(&mydata.co)); //padding for struct?
             memcpy(&mydata.no2, &mgas1.no2, sizeof(mydata.no2));
-            
+
+
+            //SEND THE MESSAGE DOWN HERE***
+
         }
         else
         {
