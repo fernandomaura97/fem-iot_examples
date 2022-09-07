@@ -73,7 +73,7 @@ typedef struct sensor_data_t {
 
 
 #pragma pack(push,1)
-    static struct hare_stats2_t{
+    typedef struct hare_stats2_t{
         
         uint8_t header; //header includes message type and node id
         
@@ -87,7 +87,7 @@ typedef struct sensor_data_t {
         uint16_t permil_radio_on; // ‰ gotten through energest
         uint16_t permil_tx;
         uint16_t permil_rx;
-        } hare_stats_mgas;
+        } hare_stats_mgas_t;
 
 #pragma pack(pop)
 
@@ -103,7 +103,7 @@ typedef struct sensor_data_t {
     typedef struct aggregation_stats2_t{
     struct hare_stats2_t p1;
     struct hare_stats2_t p2;
-    } aggregation_msg;
+    } aggregation_msg2;
 #pragma pack(pop)
 
 //static uint8_t buffer_aggregation[sizeof(aggregation_msg)]; //buffer for sending aggregated data
@@ -639,6 +639,8 @@ PROCESS_THREAD(callback_process,ev,data){
     static aggregation_msg ag_msg; 
     static aggregation_msg empty = {0};
     static hare_stats_t hare_stats_msg;
+    static hare_stats_mgas_t hare_mgas;
+
     PROCESS_BEGIN();
 
 
@@ -752,8 +754,26 @@ PROCESS_THREAD(callback_process,ev,data){
                     memset(&buf , 0, sizeof(hare_stats_t));
                     memset(&global_buffer, 0, sizeof(global_buffer));
                 }
+                else if(cb_len == sizeof(hare_stats_mgas_t)){
+                    
+                    uint32_t fbuf;
+                    uint32_t fbuf2;
+                    
+                    memcpy(&hare_mgas, buf, sizeof(hare_stats_mgas_t));
+
+                    uint8_t h_nodeid2 = (hare_mgas.header & 0b00011111);                   
+
+                    fbuf = hare_mgas.co * 100;
+                    fbuf2 = hare_mgas.no2 * 100;
+                    
+                    printf(" {\"Nodeid_SB\": %d,\"CO\":" , h_nodeid2);
+                    printf( "%lu.%02lu,\"NO2\": %lu.%02lu,", fbuf/100, fbuf%100, fbuf2/100, fbuf2%100);                    
+                    printf("\"Pw_tx1\": %d, \"n_beacons\": %d, \"n_transmissions\": %d, \"permil_radio_on\": %d, \"permil_tx\": %d, \"permil_rx\": %d}\n" ,hare_mgas.power_tx,  hare_mgas.n_beacons_received, hare_mgas.n_transmissions, hare_mgas.permil_radio_on, hare_mgas.permil_tx, hare_mgas.permil_rx);
+
+
+                }   
                 else{
-                    LOG_DBG("ERROR: wrong size of hare stats message\n");
+                    LOG_ERR("ERROR: wrong size of hare stats message\n");
                 }
             
             default:
