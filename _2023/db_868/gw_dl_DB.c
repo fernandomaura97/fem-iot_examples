@@ -744,7 +744,7 @@ PROCESS_THREAD(callback_process,ev,data){
                 if(cb_len == sizeof(hare_stats_t)){
                 
                     
-                    memcpy(&hare_stats_msg, buf, sizeof(hare_stats_t));
+                    memcpy(&hare_stats_msg, buf, sizeof(hare_stats_msg));
                     uint8_t h_nodeid = (hare_stats_msg.header & 0b00011111);
                     printf(" { \"Nodeid_SB\": %d, \"Temp\": %d.%d, \"Hum\": %d.%d , \"Pw_tx1\": %d, \"n_beacons\": %d, \"n_transmissions\": %d, \"permil_radio_on\": %d, \"permil_tx\": %d, \"permil_rx\": %d}\n" ,h_nodeid, hare_stats_msg.temperature/10, hare_stats_msg.temperature%10,  hare_stats_msg.humidity/10,   hare_stats_msg.humidity%10,  hare_stats_msg.power_tx,  hare_stats_msg.n_beacons_received, hare_stats_msg.n_transmissions, hare_stats_msg.permil_radio_on, hare_stats_msg.permil_tx, hare_stats_msg.permil_rx);             
                     
@@ -759,7 +759,7 @@ PROCESS_THREAD(callback_process,ev,data){
                     uint32_t fbuf;
                     uint32_t fbuf2;
                     
-                    memcpy(&hare_mgas, buf, sizeof(hare_stats_mgas_t));
+                    memcpy(&hare_mgas, buf, sizeof(hare_mgas));
 
                     uint8_t h_nodeid2 = (hare_mgas.header & 0b00011111);                   
 
