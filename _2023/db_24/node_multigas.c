@@ -272,7 +272,9 @@ struct s_mgas measure_multigas(uint8_t id)
 
     nullnet_buf = (uint8_t *)&hare_stats_mgas;
     nullnet_len = sizeof(hare_stats_mgas);
+    send_and_count(&dualband24_addr);
 
+    LOG_DBG("Sending hare data (MGAS)");
     return s_mgas1; 
 }
 
@@ -517,8 +519,6 @@ PROCESS_THREAD(rx_process, ev, data)
                 // add some jitter, randomize the time
                 etimer_set(&jitter, CLOCK_SECOND + random_rand() % (CLOCK_SECOND / 2));
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&jitter));
-
-                process_poll(&poll_process); // only happens first time, not associated
             }
             else
             {
@@ -531,7 +531,11 @@ PROCESS_THREAD(rx_process, ev, data)
             if (is_associated)
             {
                 // process_poll(&poll_process);
-                LOG_DBG("received poll message\n");
+                uint8_t polled_id = datapoint[1];
+                LOG_DBG("received poll message for %d\n", polled_id);
+                if(polled_id == nodeid){
+                    process_poll(&poll_process);
+                }    
             }
             else
             {
@@ -566,13 +570,22 @@ PROCESS_THREAD(associator_process, ev, data)
 {
     // static uint8_t nodeid_no;
     static uint8_t buf[2];
+    static struct etimer poll_etimer;
+    static clock_time_t time_until_poll;
+
+
     PROCESS_BEGIN();
     while (1)
     {
 
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL); // wait until beacon
-
         time_of_beacon_rx = clock_time();
+
+        time_until_poll = T_MDB + ((nodeid-1) * (T_SLOT + T_GUARD)) - T_GUARD; 
+        etimer_set( &poll_etimer, time_until_poll);
+
+
+
 
         if (!is_associated)
         {
@@ -614,8 +627,53 @@ PROCESS_THREAD(associator_process, ev, data)
             printf("I'm already associated\n");
             printf("bitmask: %02x, nodeid: %d\n", bitmask, nodeid);
 
-            process_poll(&poll_process);
+            //process_poll(&poll_process);
         }
+
+
+
+
+
+        amipolled_f = am_i_polled(bitmask, NODEID);
+
+        if( amipolled_f == 1){
+            printf("I'm transmitting in the %dth slot\n", nodeid);
+            
+           
+            //printf("radio off, time until radio on: %lu ticks, %lu seconds\n", time_until_poll ,time_until_poll/CLOCK_SECOND);              
+            NETSTACK_RADIO.off();
+            RTIMER_BUSYWAIT(5);
+            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&poll_etimer));
+            NETSTACK_RADIO.on();
+            printf("radio back on\n");
+        }
+
+        else if (amipolled_f == 0) { //if not polled, just wait for the next beacon
+            printf("Radio off until the next beacon\n");
+            NETSTACK_RADIO.off();
+            RTIMER_BUSYWAIT(5);
+            etimer_set( &poll_etimer, T_BEACON - 2*CLOCK_SECOND);
+            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&poll_etimer));
+
+            NETSTACK_RADIO.on();
+
+            printf("radio back on, beacon in ~2s\n");
+        }   
+        amipolled_f = 0; 
+        beaconrx_f= 0 ; 
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
     PROCESS_END();
