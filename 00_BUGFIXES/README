@@ -1,0 +1,8 @@
+
+
+
+PM10 sensor fixed: pulse was backwards (low to high, it should be high to low)
+
+
+file goes in arch/platform/zoul/dev
+
