@@ -768,7 +768,7 @@ PROCESS_THREAD(callback_process,ev,data){
                     
                     printf(" {\"Nodeid_SB\": %d,\"CO\":" , h_nodeid2);
                     printf( "%lu.%02lu,\"NO2\": %lu.%02lu,", fbuf/100, fbuf%100, fbuf2/100, fbuf2%100);                    
-                    printf("\"Pw_tx1\": %d, \"n_beacons\": %d, \"n_transmissions\": %d, \"permil_radio_on\": %d, \"permil_tx\": %d, \"permil_rx\": %d}\n" ,hare_mgas.power_tx,  hare_mgas.n_beacons_received, hare_mgas.n_transmissions, hare_mgas.permil_radio_on, hare_mgas.permil_tx, hare_mgas.permil_rx);
+                    printf(" \"PM10\": %u, \"Pw_tx1\": %d, \"n_beacons\": %d, \"n_transmissions\": %d, \"permil_radio_on\": %d, \"permil_tx\": %d, \"permil_rx\": %d}\n", hare_mgas.pm10 ,hare_mgas.power_tx,  hare_mgas.n_beacons_received, hare_mgas.n_transmissions, hare_mgas.permil_radio_on, hare_mgas.permil_tx, hare_mgas.permil_rx);
 
 
                 }   
