@@ -293,7 +293,8 @@ struct s_mgas measure_multigas(uint8_t id)
     //memcpy(&hare_stats_mgas.pm10, &pm10_value, sizeof(uint16_t));
 
     nullnet_buf = (uint8_t *)&hare_stats_mgas;
-    nullnet_len = sizeof(hare_stats_mgas);
+    nullnet_len = sizeof(hare_stats2_t);
+    printf("SIZE OF SENT MSG: %d, size of struct: %d", nullnet_len, sizeof(hare_stats_mgas));
     send_and_count(&dualband24_addr);
 
     LOG_DBG("Sending hare data (MGAS)");

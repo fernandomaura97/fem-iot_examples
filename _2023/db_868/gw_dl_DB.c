@@ -773,7 +773,7 @@ PROCESS_THREAD(callback_process,ev,data){
 
                 }   
                 else{
-                    LOG_ERR("ERROR: wrong size of hare stats message\n");
+                    LOG_ERR("ERROR: wrong size of hare stats message: %d\n", cb_len);
                 }
             
             default:
