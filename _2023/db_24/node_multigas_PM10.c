@@ -71,7 +71,7 @@ static struct hare_stats_t
 */
 
 
-
+/*
 #pragma pack(push,1)
     static struct hare_stats2_t{
         
@@ -90,6 +90,30 @@ static struct hare_stats_t
         } hare_stats_mgas;
 
 #pragma pack(pop)
+*/
+
+
+#pragma pack(push,1)
+    typedef struct hare_stats2_t{
+        
+        uint8_t header; //header includes message type and node id
+        
+        float co;
+        float no2;
+        uint16_t pm10; 
+
+        uint8_t power_tx;
+        uint16_t n_beacons_received;
+        uint16_t n_transmissions; 
+        uint16_t permil_radio_on; // ‰ gotten through energest
+        uint16_t permil_tx;
+        uint16_t permil_rx;
+        } hare_stats_mgas_t;
+
+#pragma pack(pop)
+
+static hare_stats_mgas_t hare_stats_mgas;
+
 
 // TIMERS
 // static clock_time_t time_until_poll;
@@ -269,7 +293,7 @@ struct s_mgas measure_multigas(uint8_t id)
 
         printf("CO: ");
         putFloat(s_mgas1.co, DEC2);
-        printf("\n");
+        printf("\t");
 
         printf("NO2: ");
         putFloat(s_mgas1.no2, DEC2);
@@ -288,13 +312,12 @@ struct s_mgas measure_multigas(uint8_t id)
 
     hare_stats_mgas.header = 0b10000000|id;
 
-    //memcpy(&hare_stats_mgas.co, &s_mgas1.co,sizeof(float));
-    //memcpy(&hare_stats_mgas.no2, &s_mgas1.no2, sizeof(float));
-    //memcpy(&hare_stats_mgas.pm10, &pm10_value, sizeof(uint16_t));
+    memcpy(&hare_stats_mgas.co, &s_mgas1.co,sizeof(float));
+    memcpy(&hare_stats_mgas.no2, &s_mgas1.no2, sizeof(float));
+    memcpy(&hare_stats_mgas.pm10, &pm10_value, sizeof(uint16_t));
 
     nullnet_buf = (uint8_t *)&hare_stats_mgas;
-    nullnet_len = sizeof(hare_stats2_t);
-    printf("SIZE OF SENT MSG: %d, size of struct: %d", nullnet_len, sizeof(hare_stats_mgas));
+    nullnet_len = sizeof(hare_stats_mgas_t);
     send_and_count(&dualband24_addr);
 
     LOG_DBG("Sending hare data (MGAS)");
@@ -543,7 +566,7 @@ PROCESS_THREAD(rx_process, ev, data)
                 is_associated = true;
                 PROCESS_CONTEXT_END(&associator_process);
                 // add some jitter, randomize the time
-                etimer_set(&jitter, CLOCK_SECOND + random_rand() % (CLOCK_SECOND / 2));
+                etimer_set(&jitter, CLOCK_SECOND - random_rand() % (CLOCK_SECOND / 2));
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&jitter));
             }
             else

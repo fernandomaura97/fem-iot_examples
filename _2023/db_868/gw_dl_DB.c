@@ -237,12 +237,16 @@ typedef struct stats_lmc_t {
     uint16_t id2;
     uint16_t id3;
     uint16_t id4;
+    uint16_t id5;
+    uint16_t id6;
 } stats_lmc_t;
-static struct stats_lmc_t stats_lmc;
+
 
 static bool poll_response_received = 0; 
 static linkaddr_t addr_stas[ROUTENUMBER]; //store sta's addresses in here, for routing and sending
 static linkaddr_t buffer_addr; 
+
+static struct stats_lmc_t stats_lmc;
 
 const linkaddr_t addr_empty = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}; //placeholder address
 
@@ -294,6 +298,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
     static struct etimer mm_timer;
     static struct etimer beacon_timer;
     childs_polled kids;
+    
 
     
     static uint8_t beaconbuf[3];
@@ -312,6 +317,8 @@ PROCESS_THREAD(coordinator_process, ev,data)
         } flags;
     
     PROCESS_BEGIN();
+
+    memset(&stats_lmc, 0, sizeof(stats_lmc_t));
 
     //bitmask = random_rand();
     bitmask = 0xFF;
@@ -337,7 +344,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
         LOG_DBG("Bitmask is %d\n", bitmask);
         printf("AA0\n"); //NODE-RED HEARTBEAT
         //printf("LMC,%d",lost_message_counter);
-        printf("{\"LMC1\":%d,\"LMC2\":%d,\"LMC3\":%d,\"LMC4\":%d}\n", stats_lmc.id1, stats_lmc.id2, stats_lmc.id3, stats_lmc.id4); 
+        printf("{\"LMC1\":%d,\"LMC2\":%d,\"LMC3\":%d,\"LMC4\":%d,\"LMC5\":%d,\"LMC6\":%d}\n", stats_lmc.id1, stats_lmc.id2, stats_lmc.id3, stats_lmc.id4, stats_lmc.id5, stats_lmc.id6); 
         
         
         etimer_set(&beacon_timer, BEACON_INTERVAL); //set the timer for the next interval
@@ -492,16 +499,19 @@ PROCESS_THREAD(coordinator_process, ev,data)
                                     }
                                     break;
                                 case 2:
-                                    LOG_ERR("this shouldn't happen (DB)!!!!!\n");
                                     break;
                                 case 3: 
-                                    stats_lmc.id3 ++;
+                                    stats_lmc.id3++;
                                     break;
                                 case 4:
-                                    stats_lmc.id4 ++;
+                                    stats_lmc.id4++;
                                     break;
                                 case 5:
+                                    stats_lmc.id5++;
                                     break;
+                                case 6:
+                                    stats_lmc.id6++;
+                                    break; 
                                 default:
                                     LOG_ERR("ID in LMC? \n");
                                     break;
@@ -714,8 +724,13 @@ PROCESS_THREAD(callback_process,ev,data){
                         if(memcmp(&ag_msg.p1, &empty.p1, sizeof(ag_msg.p1)) == 0){
                             
                             LOG_ERR("expected but no data received from CH1: (T %d  H %d TX_PWR %d)\n", ag_msg.p1.temperature, ag_msg.p1.humidity, ag_msg.p1.power_tx);
-                            stats_lmc.id1 ++;
-                        }
+                            
+                            PROCESS_CONTEXT_BEGIN(&coordinator_process);
+                                
+                                stats_lmc.id1++;
+                                
+                            PROCESS_CONTEXT_END(&coordinator_process);
+                            }
                     }
                     if(lmc_kids.nodeid2 ==1){
     
@@ -723,6 +738,11 @@ PROCESS_THREAD(callback_process,ev,data){
                         if(memcmp(&ag_msg.p2, &empty.p2, sizeof(ag_msg.p2)) == 0){
 
                             LOG_ERR("expected but no data received from CH2: (T %d  H %d TX_PWR %d)\n", ag_msg.p2.temperature, ag_msg.p2.humidity, ag_msg.p2.power_tx);     
+                                                        
+                            PROCESS_CONTEXT_BEGIN(&coordinator_process);
+                            
+                                stats_lmc.id2++;   
+                            PROCESS_CONTEXT_END(&coordinator_process);
                         }   
                     }
                     memset(&ag_msg, 0, sizeof(aggregation_msg));
