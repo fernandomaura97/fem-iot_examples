@@ -463,7 +463,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
 
                     if(!poll_response_received){ //we can receive a response by this time
 
-                        if(i<5){ //if we are polling the first 4 child nodes, account for error
+                        if(i<6){ //if we are polling the first 4 child nodes, account for error
 
                             childs_polled nins_polled = get_childs_ID_m(current_pollDB, nins_polled);
 
