@@ -29,18 +29,29 @@ index_id5 = find(( data_MAB_m(1:end,1) == 5) & (data_MAB_m (1:end,2)~= -1));
     t2 = data_MAB(index_id2, 3);
     t3 = data_MAB(index_id3, 4);
     t4 = data_MAB(index_id4, 5); 
+<<<<<<< HEAD
     %% gas data id5
+=======
+    %gas data id5
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     temp5 = data_MAB_m(index_id5, [2,3,4]);
     CO_5 = temp5(:,1);
     NO2_5 = temp5(:, 2);
     PM10_5 = temp5(:,3);
+<<<<<<< HEAD
     %% gas data id6
+=======
+    %gas data id6
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
 %     temp6 = data_MAB_m(index_id6, [2,3,4]);
 %     CO_6 = temp6(:,1);
 %     NO2_6 = temp6(:,2);
 %     PM10_6 = temp6(:,3);
 %
+<<<<<<< HEAD
 
+=======
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
 %get timestamps of every data point for every variable
 timestamps_id1 = time(index_id1);
 timestamps_id2 = time(index_id2);
@@ -49,6 +60,7 @@ timestamps_id4 = time(index_id4);
 timestamps_id5 = time_m(index_id5);
 %timestamps_id6 = time_m(index_id6);
 
+<<<<<<< HEAD
 %get timestamp of latest data point
 
 t_now = datevec(datenum(datetime('now'))); %current time
@@ -103,26 +115,63 @@ end
 
 
 if(dt_id1 <= 65) %%if last message is 'fresh' (i.e. arrived this cycle)
+=======
+%get timestamp of latest data point 
+t_now = datevec(datenum(datetime('now'))); %current time
+tlast_id1 = datevec(datenum( timestamps_id1(end)));
+tlast_id2 = datevec(datenum(timestamps_id2(end)));
+tlast_id3= datevec(datenum( timestamps_id3(end)));
+tlast_id4 = datevec(datenum(timestamps_id4(end)));
+tlast_id5 = datevec(datenum(timestamps_id5(end)));
+%tlast_id6 = datevec(datenum(timestamps_id6(end)));
+
+%compare current time and last data point, check 'freshness'
+dt_id1 = etime(t_now, tlast_id1);
+dt_id2 = etime(t_now, tlast_id2);
+dt_id3 = etime(t_now, tlast_id3);
+dt_id4 = etime(t_now, tlast_id4);
+dt_id5 = etime(t_now, tlast_id5);
+%dt_id6 = etime(t_now, tlast_id6);
+
+
+if(dt_id1 <= 60) %%if last message is 'fresh' (i.e. arrived this cycle)
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     f1 = 1; %%flag for later
 else
     f1 = 0;
 end
+<<<<<<< HEAD
 if(dt_id2 <= 66) 
+=======
+if(dt_id2 <= 60) 
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     f2 = 1;
 else
     f2 = 0;
 end
+<<<<<<< HEAD
 if(dt_id3 <= 67)
+=======
+if(dt_id3 <= 60)
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     f3 = 1;
 else
     f3 = 0;
 end
+<<<<<<< HEAD
 if(dt_id4 <= 68) 
+=======
+if(dt_id4 <= 60) 
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     f4 = 1;
 else
     f4 = 0;
 end
+<<<<<<< HEAD
 if(dt_id5 <= 69) 
+=======
+if(dt_id5 <= 60) 
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     f5 = 1;
 else
     f5 = 0;
@@ -155,6 +204,7 @@ Sa_RW4 = ID_S_RW(ind_s4, (2:end));
 Sa_RW5 = ID_S_RW(ind_s4, (2:end));
 Sa_RW6 = ID_S_RW(ind_s4, (2:end));
 
+<<<<<<< HEAD
 debug = 1;
 %%[DEBUG] PRINT ALL
 if debug
@@ -185,6 +235,8 @@ end
 %% [DEBUG END]
 
 
+=======
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
 %% channel for sampling rates:  1777719
 %% W: 2296YVIBYEW5796F  R: RO50KRZDA98EVRSW
 
@@ -210,9 +262,15 @@ T_new4 = zeros(1,6);
 T_new5 = zeros(1,6);
 T_new6 = zeros(1,6);
 
+<<<<<<< HEAD
 %% Calculate next sampling BEGIN
 if(f1 ==1)
     Dif1 = abs(t1(end)-t1(end-1));
+=======
+
+if(f1 ==1)
+    Dif1 = abs(t1(end)-t1(end-1);
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     Rwrd1 = 0;
     last_action1 = S_RW1(end,1);  
     %calculate next reward
@@ -244,7 +302,11 @@ if(f1 ==1)
 end
 
 if(f2 ==1)
+<<<<<<< HEAD
     Dif = abs(t2(end)-t2(end-1));
+=======
+    Dif = abs(t2(end)-t2(end-1);
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     Rwrd = 0;
     last_action = S_RW2(end,1);  
     %calculate next reward
@@ -276,7 +338,11 @@ if(f2 ==1)
 end
 
 if(f3 ==1)
+<<<<<<< HEAD
     Dif = abs(t3(end)-t3(end-1));
+=======
+    Dif = abs(t3(end)-t3(end-1);
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     Rwrd = 0;
     last_action = S_RW3(end,1);  
     %calculate next reward
@@ -309,7 +375,11 @@ end
 
 
 if(f4 ==1)
+<<<<<<< HEAD
     Dif = abs(t4(end)-t4(end-1));
+=======
+    Dif = abs(t4(end)-t4(end-1);
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     Rwrd = 0;
     last_action = S_RW4(end,1);  
     %calculate next reward
@@ -341,7 +411,11 @@ if(f4 ==1)
 end
 
 if(f5 ==1)
+<<<<<<< HEAD
     Dif = abs(NO2_5(end)-NO2_5(end-1));
+=======
+    Dif = abs(t5(end)-t5(end-1);
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     Rwrd = 0;
     last_action = S_RW5(end,1);  
     %calculate next reward
@@ -367,11 +441,16 @@ if(f5 ==1)
         [~,next_T] = max(T_new5(2:6));
     end
 
+<<<<<<< HEAD
     disp('explore5 | nextT5 is:');
+=======
+    disp('explore45 | nextT5 is:');
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
     disp([explore next_T]);
     T_new5(1)=next_T; 
 end
 
+<<<<<<< HEAD
 %% Calculate next Sampling END
 
 if(f1|f2|f3|f4|f5)
@@ -426,6 +505,18 @@ if(f1|f2|f3|f4|f5)
     NEW_SamplingRates = [newmatrix(1,2),newmatrix(2,2),newmatrix(3,2),newmatrix(4,2),newmatrix(5,2)];
     kk = thingSpeakWrite(1777719, 'Fields',[1,2,3,4,5], 'Values', NEW_SamplingRates,'WriteKey', '2296YVIBYEW5796F')
 end
+=======
+
+
+
+
+
+    
+    
+    
+
+
+>>>>>>> ef7e54b197c2c56edbcc7fa88eecb172fa1072ff
 
 
 

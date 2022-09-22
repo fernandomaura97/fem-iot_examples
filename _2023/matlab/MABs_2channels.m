@@ -1,23 +1,23 @@
 
 
-Threshold = 0.15; % ºC This info can be computed in advance, for each data type
+Threshold_t = 0.15; % ºC This info can be computed in advance, for each data type
 
 % New measure received 
 readChannelID = 1764122; 
-TemperatureFieldID = [1,2,3,4,5]; 
+FieldID = [1,2,3,4,5]; 
 readAPIKey = 'JWG70R0JPMTX1U5G'; 
-[data_TS,time,channel_info] = thingSpeakRead(readChannelID,'Fields',TemperatureFieldID,'NumPoints',50,'ReadKey',readAPIKey); 
+[data_MAB,time,channel_info] = thingSpeakRead(readChannelID,'Fields',FieldID,'NumPoints',50,'ReadKey',readAPIKey); 
 
-index_id1 = find( (data_TS (1:end,1) == 1) & (data_TS (1:end,2)~=0)); %%correct
-index_id2 = find( (data_TS (1:end,1) == 2) & (data_TS (1:end,3)~=0));
-index_id3 = find( (data_TS (1:end,1) == 3) & (data_TS (1:end,4)~=0));
-index_id4 = find( (data_TS (1:end,1) == 4) & (data_TS (1:end,5)~=0));
+index_id1 = find( (data_MAB (1:end,1) == 1) & (data_MAB (1:end,2)~=0)); %%correct
+index_id2 = find( (data_MAB (1:end,1) == 2) & (data_MAB (1:end,3)~=0));
+index_id3 = find( (data_MAB (1:end,1) == 3) & (data_MAB (1:end,4)~=0));
+index_id4 = find( (data_MAB (1:end,1) == 4) & (data_MAB (1:end,5)~=0));
 
 
-t1 = data_TS(index_id1, 2);
-t2 = data_TS(index_id2, 3);
-t3 = data_TS(index_id3, 4);
-t4 = data_TS(index_id4, 5); 
+t1 = data_MAB(index_id1, 2);
+t2 = data_MAB(index_id2, 3);
+t3 = data_MAB(index_id3, 4);
+t4 = data_MAB(index_id4, 5); 
 
 timestamp_id1 = time(index_id1);
 timestamp_id2 = time(index_id2);
@@ -77,6 +77,7 @@ ind_s2 = find(ID_S_RW(1:end,1) == 2);
 ind_s3 = find(ID_S_RW(1:end,1) == 3);
 ind_s4 = find(ID_S_RW(1:end,1) == 4);
 
+%%Sampling rates & rwrds
 Sa_RW1 = ID_S_RW(ind_s1, (2:end));
 Sa_RW2 = ID_S_RW(ind_s2, (2:end));
 Sa_RW3 = ID_S_RW(ind_s3, (2:end));
@@ -87,12 +88,13 @@ S_RW1 = Sa_RW1(end,:);
 S_RW2 = Sa_RW2(end,:);
 S_RW3 = Sa_RW3(end,:);
 S_RW4 = Sa_RW4(end,:);
-
+S_RW5 = 
 global T_new1;
 global T_new2;
 global T_new3; 
 global T_new4;
-
+global T_new5;
+global T_new6;
 
 
 
@@ -108,7 +110,7 @@ if (flag_id1 == 1)
     last_action1 = S_RW1(end,1);
 
     % Calculate Rewards
-    if (Difference1 < Threshold)
+    if (Difference1 < Threshold_t)
         Reward1 = last_action1;
     else
         Reward1 = 0;
@@ -151,7 +153,7 @@ if (flag_id2 == 1)
     last_action2 = S_RW2(end,1);
 
     % Calculate Rewards
-    if (Difference2 < Threshold)
+    if (Difference2 < Threshold_t)
         Reward2 = last_action2;
     else
         Reward2 = 0;
@@ -193,7 +195,7 @@ if (flag_id3 == 1)
     last_action3 = S_RW3(end,1);
 
     % Calculate Rewards
-    if (Difference3 < Threshold)
+    if (Difference3 < Threshold_t)
         Reward3 = last_action3;
     else
         Reward3 = 0;
@@ -237,7 +239,7 @@ if (flag_id4 == 1)
     last_action4 = S_RW4(end,1);
 
     % Calculate Rewards
-    if (Difference4 < Threshold)
+    if (Difference4 < Threshold_t)
         Reward4 = last_action4;
     else
         Reward4 = 0;
