@@ -611,9 +611,9 @@ PROCESS_THREAD(energest_example_process, ev, data)
 
         // HARE STATS FLUSH
 
-        hare_stats_mgas.permil_radio_on = (ENERGEST_GET_TOTAL_TIME() - energest_type_time(ENERGEST_TYPE_TRANSMIT) - energest_type_time(ENERGEST_TYPE_LISTEN)) * 1000 / ENERGEST_GET_TOTAL_TIME();
-        hare_stats_mgas.permil_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT) * 1000 / ENERGEST_GET_TOTAL_TIME();
-        hare_stats_mgas.permil_rx = energest_type_time(ENERGEST_TYPE_LISTEN) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats.permil_radio_on = (ENERGEST_GET_TOTAL_TIME() - energest_type_time(ENERGEST_TYPE_TRANSMIT) - energest_type_time(ENERGEST_TYPE_LISTEN)) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats.permil_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats.permil_rx = energest_type_time(ENERGEST_TYPE_LISTEN) * 1000 / ENERGEST_GET_TOTAL_TIME();
     }
 
     PROCESS_END();
