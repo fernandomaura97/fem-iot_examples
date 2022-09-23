@@ -39,12 +39,12 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID NODEID5
+#define NODEID NODEID1
 
 #define ADC_PIN  2
 
 
-#define T_MDB (6 * CLOCK_SECOND)
+#define T_MDB (10 * CLOCK_SECOND)
 #define T_SLOT (1.5 * CLOCK_SECOND)
 #define T_GUARD (0.5 * CLOCK_SECOND)
 #define T_BEACON (60 * CLOCK_SECOND)
@@ -234,7 +234,47 @@ void putFloat( float f, tPrecision p )
     putLong( i ) ;
     putchar('\n') ;
 }
+/*
+void m_and_send_dht22(uint8_t id)
+{
+    // uint8_t buf_dht22[5];
+    int16_t temperature, humidity;
 
+    SENSORS_ACTIVATE(dht22);
+
+    if (dht22_read_all(&temperature, &humidity) != DHT22_ERROR)
+    {
+        mydata.hum = humidity;
+        mydata.temperature = temperature;
+
+        LOG_DBG("Temperature: %02d.%d C\n", temperature / 10, temperature % 10);
+        LOG_DBG("Humidity: %02d.%d \n", humidity / 10, humidity % 10);
+    }
+    else
+    {
+        mydata.hum = 0;
+        mydata.temperature = 0;
+        LOG_ERR("FAILED TO READ DHT22\n");
+    }
+
+    hare_stats.header = 0b10000000 | id;
+    hare_stats.temperature = temperature;
+    hare_stats.humidity = humidity;
+
+    nullnet_buf = (uint8_t *)&hare_stats;
+    nullnet_len = sizeof(hare_stats);
+    // NETSTACK_NETWORK.output(&dualband24_addr);
+    send_and_count(&dualband24_addr);
+    LOG_DBG("Sending hare data and stats: %d %d %d %d %d %d %d\n",
+            hare_stats.header, hare_stats.temperature, hare_stats.humidity,
+            hare_stats.n_transmissions, hare_stats.n_beacons_received,
+            hare_stats.permil_radio_on, hare_stats.permil_tx);
+
+    // SENSORS_DEACTIVATE(dht22);
+    SENSORS_DEACTIVATE(dht22);
+    return;
+}
+*/
 struct s_mgas measure_multigas(uint8_t id)
 {
 
@@ -253,7 +293,7 @@ struct s_mgas measure_multigas(uint8_t id)
 
         printf("CO: ");
         putFloat(s_mgas1.co, DEC2);
-        printf("\t");
+        printf("\n");
 
         printf("NO2: ");
         putFloat(s_mgas1.no2, DEC2);
@@ -278,6 +318,7 @@ struct s_mgas measure_multigas(uint8_t id)
 
     nullnet_buf = (uint8_t *)&hare_stats_mgas;
     nullnet_len = sizeof(hare_stats_mgas_t);
+    printf("SIZE OF SENT MSG: %d, size of struct: %d, sizeof typedef: %d", nullnet_len, sizeof(hare_stats_mgas), sizeof(hare_stats_mgas_t));
     send_and_count(&dualband24_addr);
 
     LOG_DBG("Sending hare data (MGAS)");
@@ -402,6 +443,7 @@ void input_callback(const void *data, uint16_t len,
     len_msg = len;
     // uint8_t *buf = (uint8_t *)malloc(len);
     // packetbuf_dataptr(buf, data, len); //TEST THIS
+
     process_poll(&rx_process);
 }
 
@@ -525,7 +567,7 @@ PROCESS_THREAD(rx_process, ev, data)
                 is_associated = true;
                 PROCESS_CONTEXT_END(&associator_process);
                 // add some jitter, randomize the time
-                etimer_set(&jitter, CLOCK_SECOND/2 - random_rand() % (CLOCK_SECOND / 2));
+                etimer_set(&jitter, CLOCK_SECOND + random_rand() % (CLOCK_SECOND / 2));
                 PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&jitter));
             }
             else
@@ -722,29 +764,15 @@ PROCESS_THREAD(poll_process, ev, data)
 PROCESS_THREAD(energest_example_process, ev, data)
 {
     static struct etimer periodic_timer;
-    static uint8_t death_counter;
 
     PROCESS_BEGIN();
-    death_counter = 0; 
+
     etimer_set(&periodic_timer, CLOCK_SECOND * 60);
     while (1)
     {
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
         etimer_reset(&periodic_timer);
 
-        if(!beaconrx_f)
-        {
-            death_counter += 1;
-            LOG_ERR("DEATHCOUNTER %d", death_counter);
-            if(death_counter >=3)
-            {   
-                LOG_ERR("rebooting \n\n");
-                watchdog_reboot();
-            }
-        }
-        else {
-            death_counter = 0; 
-            } 
         energest_flush();
 
         // UNNECESARY, DELETE WHEN TESTED

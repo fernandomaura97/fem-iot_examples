@@ -548,50 +548,55 @@ PROCESS_THREAD(poll_process, ev,data){
 
 PROCESS_THREAD(energest_example_process, ev, data)
 {
-  static struct etimer periodic_timer;
+    static struct etimer periodic_timer;
+    static uint8_t death_counter;
 
-  PROCESS_BEGIN();
+    PROCESS_BEGIN();
+    death_counter = 0; 
+    etimer_set(&periodic_timer, CLOCK_SECOND * 60);
+    while (1)
+    {
+        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+        etimer_reset(&periodic_timer);
 
-  etimer_set(&periodic_timer, CLOCK_SECOND * 60);
-  while(1) {
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-    etimer_reset(&periodic_timer);
+        if(!beaconrx_f)
+        {
+            death_counter += 1;
+            LOG_ERR("DEATHCOUNTER %d", death_counter);
+            if(death_counter >=3)
+            {   
+                LOG_ERR("rebooting \n\n");
+                watchdog_reboot();
+            }
+        }
+        else{
+            death_counter = 0; 
+        }
+        energest_flush();
 
-    energest_flush();
+        // UNNECESARY, DELETE WHEN TESTED
 
+        printf("\nEnergest:\n");
+        printf(" CPU          %4lus LPM      %4lus DEEP LPM %4lus  Total time %lus\n",
+               to_seconds(energest_type_time(ENERGEST_TYPE_CPU)),
+               to_seconds(energest_type_time(ENERGEST_TYPE_LPM)),
+               to_seconds(energest_type_time(ENERGEST_TYPE_DEEP_LPM)),
+               to_seconds(ENERGEST_GET_TOTAL_TIME()));
 
-    //UNNECESARY, DELETE WHEN TESTED
+        printf(" Radio LISTEN %4lus TRANSMIT %4lus OFF      %4lus\n",
+               to_seconds(energest_type_time(ENERGEST_TYPE_LISTEN)),
+               to_seconds(energest_type_time(ENERGEST_TYPE_TRANSMIT)),
+               to_seconds(ENERGEST_GET_TOTAL_TIME() - energest_type_time(ENERGEST_TYPE_TRANSMIT) - energest_type_time(ENERGEST_TYPE_LISTEN)));
 
-    printf("\nEnergest:\n");
-    printf(" CPU          %4lus LPM      %4lus DEEP LPM %4lus  Total time %lus\n",
-           to_seconds(energest_type_time(ENERGEST_TYPE_CPU)),
-           to_seconds(energest_type_time(ENERGEST_TYPE_LPM)),
-           to_seconds(energest_type_time(ENERGEST_TYPE_DEEP_LPM)),
-           to_seconds(ENERGEST_GET_TOTAL_TIME()));
+        // HARE STATS FLUSH
 
-    printf(" Radio LISTEN %4lus TRANSMIT %4lus OFF      %4lus\n",
-           to_seconds(energest_type_time(ENERGEST_TYPE_LISTEN)),
-           to_seconds(energest_type_time(ENERGEST_TYPE_TRANSMIT)),
-           to_seconds(ENERGEST_GET_TOTAL_TIME()
-                      - energest_type_time(ENERGEST_TYPE_TRANSMIT)
-                      - energest_type_time(ENERGEST_TYPE_LISTEN)));
+        hare_stats_mgas.permil_radio_on = (ENERGEST_GET_TOTAL_TIME() - energest_type_time(ENERGEST_TYPE_TRANSMIT) - energest_type_time(ENERGEST_TYPE_LISTEN)) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats_mgas.permil_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT) * 1000 / ENERGEST_GET_TOTAL_TIME();
+        hare_stats_mgas.permil_rx = energest_type_time(ENERGEST_TYPE_LISTEN) * 1000 / ENERGEST_GET_TOTAL_TIME();
+    }
 
-
-    //HARE STATS FLUSH
-
-    hare_stats.permil_radio_on = (ENERGEST_GET_TOTAL_TIME()
-                                  - energest_type_time(ENERGEST_TYPE_TRANSMIT)
-                                  - energest_type_time(ENERGEST_TYPE_LISTEN))
-                                 * 1000 / ENERGEST_GET_TOTAL_TIME();
-    hare_stats.permil_tx = energest_type_time(ENERGEST_TYPE_TRANSMIT)
-                           * 1000 / ENERGEST_GET_TOTAL_TIME();
-    hare_stats.permil_rx = energest_type_time(ENERGEST_TYPE_LISTEN)
-                           * 1000 / ENERGEST_GET_TOTAL_TIME();
-  }
-
-  PROCESS_END();
+    PROCESS_END();
 }
-
 
 
 
