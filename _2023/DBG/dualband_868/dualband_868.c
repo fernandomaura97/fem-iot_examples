@@ -140,7 +140,7 @@ typedef struct aggregation_stats_t{
 
 static uint8_t buffer_aggregation[sizeof(aggregation_msg)]; //buffer for sending aggregated data
 
-
+static uint8_t death_beacons, death_uart; 
 
 uint16_t counter_uart;
 static char buf_in[100];
@@ -156,7 +156,7 @@ volatile static uint8_t bitmask;
 static clock_time_t time_of_beacon_rx; // time of beacon reception
 
 
-static bool bcon_flag = 0; // flag que indica si el node ha rebut cap beacon
+static bool beaconrx_f = 0; // flag que indica si el node ha rebut cap beacon
 
 
 static struct ctimer ct; 
@@ -263,7 +263,25 @@ int print_uart(unsigned char c){
 void
 ctimer_callback(void *ptr)
 {
-   bcon_flag = 0;
+
+  if(!beaconrx_f){
+
+    death_beacons +=1;
+  }
+  else{death_beacons = 0;}
+  if(!uart_rx_flag)
+  {
+    death_uart +=1;
+  }
+  else{death_uart = 0;}
+
+  if(death_beacons >=3 || death_uart>=10)
+  {
+      printf("Reboot by fail to connect: cause %d %d", death_beacons,death_uart );
+      process_start(&reboot_prc, "reboot");
+
+  }
+   beaconrx_f = 0;
   //NETSTACK_RADIO.on();
   
   LOG_DBG("CTimer callback called, turning radio ON\n");
@@ -319,11 +337,11 @@ while(1){
                 
     uint8_t Beacon_no = datapoint[0] & 0b00011111;
 
-    if(bcon_flag == 0){
+    if(beaconrx_f == 0){
 
     
      
-      bcon_flag = 1;
+      beaconrx_f = 1;
       ctimer_set(&ct, T_BEACON - 3*CLOCK_SECOND, ctimer_callback, NULL);
       if(Beacon_no == 0){
         
@@ -576,6 +594,8 @@ PROCESS_THREAD(poll_process,ev,data)
 
       LOG_DBG("Sending aggregated data: %d %d %d %d %d %d %d %d %d %d %d %d etc etc etc\n", global_ag_buf[0], global_ag_buf[1], global_ag_buf[2], global_ag_buf[3], global_ag_buf[4], global_ag_buf[5], global_ag_buf[6], global_ag_buf[7], global_ag_buf[8], global_ag_buf[9], global_ag_buf[10], global_ag_buf[11]);
       NETSTACK_NETWORK.output(NULL);
+
+      uart_rx_flag = false;
     }
     else{
       LOG_DBG("Didn't receive a UART packet!!!\n");

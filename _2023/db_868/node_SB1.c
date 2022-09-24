@@ -29,7 +29,7 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID NODEID3
+#define NODEID NODEID4
 
 
 #define T_MDB  (6 * CLOCK_SECOND)
@@ -514,7 +514,7 @@ PROCESS_THREAD(associator_process, ev,data){
             printf("radio back on, beacon in ~2s\n");
         }   
         amipolled_f = 0; 
-        beaconrx_f= 0 ; 
+       
 
     }
 
@@ -593,6 +593,8 @@ PROCESS_THREAD(energest_example_process, ev, data)
         else {
             death_counter = 0; 
             } 
+        
+        beaconrx_f= 0 ; 
         energest_flush();
 
         // UNNECESARY, DELETE WHEN TESTED
