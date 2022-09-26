@@ -29,7 +29,7 @@
 #define NODEID7 64
 #define NODEID8 128
 
-#define NODEID NODEID4
+#define NODEID NODEID3
 
 
 #define T_MDB  (6 * CLOCK_SECOND)
@@ -273,6 +273,7 @@ PROCESS(poll_process, "STA process");
 PROCESS(associator_process,"associator process");
 PROCESS(rx_process, "Radio process");
 PROCESS(energest_example_process, "energest");
+PROCESS(reboot_process,"reboot process");
 //AUTOSTART_PROCESSES(&rx_process, &associator_process, &poll_process, &energest_example_process);
 AUTOSTART_PROCESSES(&rx_process, &associator_process, &poll_process, &energest_example_process);
 /*---------------------------------------------------------------------------*/
@@ -506,7 +507,7 @@ PROCESS_THREAD(associator_process, ev,data){
             printf("Radio off until the next beacon\n");
             NETSTACK_RADIO.off();
             RTIMER_BUSYWAIT(5);
-            etimer_set( &poll_etimer, T_BEACON - 2*CLOCK_SECOND);
+            etimer_set( &poll_etimer, T_BEACON - 8*CLOCK_SECOND);
             PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&poll_etimer));
 
             NETSTACK_RADIO.on();
@@ -574,6 +575,9 @@ PROCESS_THREAD(energest_example_process, ev, data)
 
     PROCESS_BEGIN();
     death_counter = 0; 
+    
+    LOG_DBG("This message shouuld only appear once\n");
+    
     etimer_set(&periodic_timer, CLOCK_SECOND * 60);
     while (1)
     {
@@ -584,14 +588,17 @@ PROCESS_THREAD(energest_example_process, ev, data)
         {
             death_counter += 1;
             LOG_ERR("DEATHCOUNTER %d", death_counter);
-            if(death_counter >=3)
+            if(death_counter >=10)
             {   
                 LOG_ERR("rebooting \n\n");
-                watchdog_reboot();
+                //watchdog_reboot();   //method 1
+                //method 2:
+                process_start(&reboot_process,"RBT");
             }
         }
         else {
             death_counter = 0; 
+            LOG_DBG("deathcounter RST");
             } 
         
         beaconrx_f= 0 ; 
@@ -622,6 +629,19 @@ PROCESS_THREAD(energest_example_process, ev, data)
 }
 
 
+PROCESS_THREAD(reboot_process,ev,data)
+{
+	static struct etimer d_timer;
+	PROCESS_BEGIN();
+	while(1){
+	etimer_set(&d_timer, 3*CLOCK_SECOND);
+	LOG_ERR("\n\nRESETTING IN 3\n\n");
+	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&d_timer));
+		
+	watchdog_reboot();
+	}
+	PROCESS_END();
 
 
+}
 
