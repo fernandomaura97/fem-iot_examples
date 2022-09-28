@@ -555,7 +555,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
         memset(&flags, 0, sizeof(flags));
 
         LOG_INFO("Polling finished\n");
-      
+
          //if we need to change bitmask for next loop, do it here      
          //also use this time for uplink and downlink extra communications
 
@@ -766,6 +766,10 @@ PROCESS_THREAD(callback_process,ev,data){
                     
                     memcpy(&hare_stats_msg, buf, sizeof(hare_stats_msg));
                     uint8_t h_nodeid = (hare_stats_msg.header & 0b00011111);
+                    if((hare_stats_msg.temperature > 1000) || (hare_stats_msg.humidity >1000)){
+                        hare_stats_msg.temperature = -1;
+                        hare_stats_msg.temperature = -1; 
+                    }
                     printf(" { \"Nodeid_SB\": %d, \"Temp\": %d.%d, \"Hum\": %d.%d , \"Pw_tx1\": %d, \"n_beacons\": %d, \"n_transmissions\": %d, \"permil_radio_on\": %d, \"permil_tx\": %d, \"permil_rx\": %d}\n" ,h_nodeid, hare_stats_msg.temperature/10, hare_stats_msg.temperature%10,  hare_stats_msg.humidity/10,   hare_stats_msg.humidity%10,  hare_stats_msg.power_tx,  hare_stats_msg.n_beacons_received, hare_stats_msg.n_transmissions, hare_stats_msg.permil_radio_on, hare_stats_msg.permil_tx, hare_stats_msg.permil_rx);             
                     
                     
@@ -785,7 +789,17 @@ PROCESS_THREAD(callback_process,ev,data){
 
                     fbuf = hare_mgas.co * 100;
                     fbuf2 = hare_mgas.no2 * 100;
-                    
+            /// OUTLIERS
+                    if(fbuf > 100000){
+                        fbuf = 0;
+                    }
+                    if(fbuf2 > 100000){
+                        fbuf2 = 0; 
+                    }
+
+                    if(hare_mgas.pm10 > 1000 )
+                    {hare_mgas.pm10 = 0; }
+            ///OUTLIERS END
                     printf(" {\"Nodeid_SB\": %d,\"CO\":" , h_nodeid2);
                     printf( "%lu.%02lu,\"NO2\": %lu.%02lu,", fbuf/100, fbuf%100, fbuf2/100, fbuf2%100);                    
                     printf(" \"PM10\": %u, \"Pw_tx1\": %d, \"n_beacons\": %d, \"n_transmissions\": %d, \"permil_radio_on\": %d, \"permil_tx\": %d, \"permil_rx\": %d}\n", hare_mgas.pm10 ,hare_mgas.power_tx,  hare_mgas.n_beacons_received, hare_mgas.n_transmissions, hare_mgas.permil_radio_on, hare_mgas.permil_tx, hare_mgas.permil_rx);

@@ -4,7 +4,7 @@ all: $(CONTIKI_PROJECT)
 
 #MODULES += os/services/shell
 
-CONTIKI_TARGET_SOURCEFILES += dht22.c adc-sensors.c
+CONTIKI_TARGET_SOURCEFILES += dht22.c adc-sensors.c multigas.c pm10-sensor.c
 
 CONTIKI = ../../..
 MAKE_NET = MAKE_NET_NULLNET
