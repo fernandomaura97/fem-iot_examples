@@ -232,21 +232,21 @@ static uint8_t bitmask;
 static uint8_t bitmask_copy; //for storing the bitmask before it is changed
 
 //static uint16_t lost_message_counter = 0;
-typedef struct stats_lmc_t {
+static struct stats_lmc_t {
     uint16_t id1;
     uint16_t id2;
     uint16_t id3;
     uint16_t id4;
     uint16_t id5;
     uint16_t id6;
-} stats_lmc_t;
+} stats_lmc;
 
 
 static bool poll_response_received = 0; 
 static linkaddr_t addr_stas[ROUTENUMBER]; //store sta's addresses in here, for routing and sending
 static linkaddr_t buffer_addr; 
 
-static struct stats_lmc_t stats_lmc;
+
 
 const linkaddr_t addr_empty = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}; //placeholder address
 
@@ -318,7 +318,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
     
     PROCESS_BEGIN();
 
-    memset(&stats_lmc, 0, sizeof(stats_lmc_t));
+    memset(&stats_lmc, 0, sizeof(stats_lmc));
 
     //bitmask = random_rand();
     bitmask = 0xFF;
@@ -463,13 +463,14 @@ PROCESS_THREAD(coordinator_process, ev,data)
 
                     if(!poll_response_received){ //we can receive a response by this time
 
-                        if(i<6){ //if we are polling the first 4 child nodes, account for error
+                        if(i<6){ //if we are polling the first 5 child nodes, account for error
 
-                            childs_polled nins_polled = get_childs_ID_m(current_pollDB, nins_polled);
+                           
 
                             
                             LOG_INFO("no response\n");
                             if(i ==2){
+                                childs_polled nins_polled = get_childs_ID_m(current_pollDB, nins_polled);
                                 printf(" { \"Nodeid_DB\": %d, \"nodeid_ch1\": %d, \"nodeid2_ch2\": %d, \"T1\": 0, \"H1\": 0, \"Pw_tx1\": 0,\"n_beacons1\": 0, \"n_transmissions1\": 0, \"permil_radio_on1\": 0,\"permil_tx1\": 0, \"permil_rx1\": 0, \"T2\": 0, \"H2\": 0, \"Pw_tx2\": 0, \"n_beacons2\": 0,  \"n_transmissions2\": 0, \"permil_radio_on2\": 0, \"permil_tx2\": 0, \"permil_rx2\": 0}\n" ,current_pollDB, nins_polled.nodeid1, nins_polled.nodeid2); 
                             
                             }
@@ -486,11 +487,12 @@ PROCESS_THREAD(coordinator_process, ev,data)
                                     kids = are_childs_polled(kids, bitmask_copy);
                                     LOG_DBG("IS_POLLED1: %d, IS_POLLED2: %d\n", kids.nodeid1, kids.nodeid2);
                                     
-                                    if(kids.nodeid1 ==1 )
+                                    if(kids.nodeid1 ==1)
                                     {
                                         stats_lmc.id1++;
                                         LOG_DBG("adding to lmc id1: %d\n", stats_lmc.id1);
                                     }
+
                                     
                                     if(kids.nodeid2 ==1)
                                     {
@@ -501,16 +503,20 @@ PROCESS_THREAD(coordinator_process, ev,data)
                                 case 2:
                                     break;
                                 case 3: 
-                                    stats_lmc.id3++;
+                                    stats_lmc.id3 = stats_lmc.id3 + 1;
+                                    LOG_DBG("lmc id3 +1\n");
                                     break;
                                 case 4:
                                     stats_lmc.id4++;
+                                    LOG_DBG("lmc id4 +1\n");
                                     break;
                                 case 5:
                                     stats_lmc.id5++;
+                                    LOG_DBG("lmc id5 +1\n");
                                     break;
                                 case 6:
                                     stats_lmc.id6++;
+                                    LOG_DBG("lmc id6 +1\n");
                                     break; 
                                 default:
                                     LOG_ERR("ID in LMC? \n");
