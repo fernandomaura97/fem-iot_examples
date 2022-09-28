@@ -396,12 +396,11 @@ PROCESS_THREAD(coordinator_process, ev,data)
                             nullnet_buf = (uint8_t*)&pollbuf;
                             nullnet_len = sizeof(pollbuf);
                             NETSTACK_NETWORK.output(NULL); 
-                        
                         }
-                        else{
+                       else{
                             LOG_DBG("node DB1 already polled\n");
                         }
-                        break;
+                        break; 
                     /*
                     -------------- UNCOMMENT IF NODES 3 AND 4 ARE DUALBAND ----------- **TODO: use #DEFINE for this!
 
@@ -478,7 +477,10 @@ PROCESS_THREAD(coordinator_process, ev,data)
                             switch(i)
                             {
                                 case 1:
+                                    break;
                                    //DUAL BAND BOX!!
+
+                                case 2:
 
                                     kids = get_childs_ID( get_nodeid_reverse(current_pollDB) , kids);
 
@@ -500,8 +502,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
                                         LOG_DBG("adding to lmc id2: %d\n", stats_lmc.id1);
                                     }
                                     break;
-                                case 2:
-                                    break;
+                                    
                                 case 3: 
                                     stats_lmc.id3 = stats_lmc.id3 + 1;
                                     LOG_DBG("lmc id3 +1\n");
