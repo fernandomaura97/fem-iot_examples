@@ -374,6 +374,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
         {   leds_on(LEDS_BLUE);
             beaconbuf[1] = bitmask; 
             beaconbuf[0] = i; 
+
             nullnet_buf = (uint8_t*)&beaconbuf;
             nullnet_len = sizeof(beaconbuf);
             
@@ -937,6 +938,9 @@ PROCESS_THREAD(serial_process, ev, data)
         else{
             LOG_ERR("Error parsing bitmask\n");
         }
+    }
+    else if (strcmp(header,"RST")==0){
+        process_start(&reboot_process, "RBT");
     }    
    }
     
