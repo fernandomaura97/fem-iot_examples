@@ -602,6 +602,7 @@ PROCESS_THREAD(coordinator_process, ev,data)
 
 
         LOG_INFO("Polling finished\n");
+        memset(&rxflags, 0, sizeof(rxflags));
 
          //if we need to change bitmask for next loop, do it here      
          //also use this time for uplink and downlink extra communications
